@@ -1,11 +1,87 @@
 @import 'tailwindcss';
 
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
 @source '../**/*.blade.php';
 @source '../**/*.js';
+@source '../**/*.vue';
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: ui-sans-serif, system-ui, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: ui-monospace, 'SFMono-Regular', 'JetBrains Mono', Menlo, monospace;
+}
+
+html,
+body,
+#app {
+    height: 100%;
+}
+
+body {
+    @apply bg-slate-100 text-slate-800 antialiased;
+}
+
+/* Ismétlődő űrlap-elemek a Vue komponensekben */
+.lbl {
+    @apply mb-1 block text-xs font-medium text-slate-600;
+}
+
+.inp {
+    @apply w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100;
+}
+
+.hint {
+    @apply mt-1 text-xs text-slate-400;
+}
+
+.btn-primary {
+    @apply rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50;
+}
+
+.btn-secondary {
+    @apply rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50;
+}
+
+.btn-danger {
+    @apply rounded-lg px-3 py-1.5 text-sm text-red-600 hover:bg-red-50;
+}
+
+.btn-ghost {
+    @apply rounded px-2 py-1 text-slate-600 hover:bg-slate-100;
+}
+
+.menu-item {
+    @apply block w-full px-3 py-1.5 text-left hover:bg-slate-100;
+}
+
+/* Belépő oldal (Blade, nem Vue) */
+.login-page {
+    @apply flex min-h-screen items-center justify-center bg-slate-100;
+}
+
+.login-card {
+    @apply w-full max-w-sm rounded-xl bg-white p-8 shadow-sm ring-1 ring-slate-200;
+}
+
+.login-card h1 {
+    @apply mb-6 text-xl font-semibold text-slate-900;
+}
+
+.login-card label {
+    @apply mt-4 block text-sm font-medium text-slate-700;
+}
+
+.login-card input[type='email'],
+.login-card input[type='password'] {
+    @apply mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100;
+}
+
+.login-remember {
+    @apply mt-4 flex items-center gap-2 text-sm font-normal text-slate-600;
+}
+
+.login-card button {
+    @apply mt-6 w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700;
+}
+
+.login-error {
+    @apply rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 ring-1 ring-red-100;
 }
