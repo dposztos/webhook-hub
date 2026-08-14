@@ -2,39 +2,31 @@
 
 namespace App\Providers;
 
-use App\Storage;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Bootstrap any application services.
-     *
-     * @return void
-     */
-    public function boot()
+    public function register(): void
     {
+        //
     }
 
-    /**
-     * Register any application services.
-     *
-     * @return void
-     */
-    public function register()
+    public function boot(): void
     {
-        $this->app->bind(Storage\RequestStore::class, Storage\Redis\RequestStore::class);
-        $this->app->bind(Storage\TokenStore::class, Storage\Redis\TokenStore::class);
-    }
+        RateLimiter::for('ingest', function (Request $request) {
+            $limit = (int) config('webhookhub.ingest_rate_limit');
 
-    /**
-     * @return array
-     */
-    public function provides()
-    {
-        return [
-            Storage\RequestStore::class,
-            Storage\TokenStore::class
-        ];
+            return $limit > 0
+                ? Limit::perMinute($limit)->by($request->ip())
+                : Limit::none();
+        });
+
+        if (str_starts_with((string) config('app.url'), 'https://')) {
+            URL::forceScheme('https');
+        }
     }
 }
