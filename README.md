@@ -1,59 +1,111 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Webhook Hub
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Saját üzemeltetésű webhook-gyűjtő és -automatizáló. A [webhook.site](https://github.com/fredsted/webhook.site)
+MIT-licencű OSS változatából indult fork, de a v2 ág önálló alkalmazás: Laravel 12 + PostgreSQL + Vue 3.
 
-## About Laravel
+Amit az eredeti nyílt verzió nem tudott, és itt megvan:
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- **Csoport-hierarchia**: tetszőleges mélységű fa (pl. `Ügyfelek / ABC Kft. / Rendelések`), csoportonként
+  akárhány URL. Minden URL külön endpoint, saját beállításokkal.
+- **Minden üzenet megmarad**: nincs 500 kérés/URL korlát és nincs 7 napos lejárat. A megőrzés
+  endpointonként korlátozható, ha valamit mégis takarítani kell.
+- **Szabályok és akciók**: a beérkezett JSON mezőire (fejlécekre, query-paraméterekre) épülő,
+  egymásba ágyazható ÉS/VAGY feltételek, és rájuk kötött akciók. Jelenleg: e-mail küldése HTML-sablonnal,
+  a beérkezett adatokra hivatkozó változókkal.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Az URL-ek felépítése
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+```
+https://<host>/u/<csoport>/<alcsoport>/<endpoint>/<titok>[/<tetszőleges folytatás>]
+                └──────── a fa útvonala ────────┘  └ 12 karakter, cserélhető
+```
 
-## Learning Laravel
+Példa: `https://webhook.posztos.com/u/ugyfelek/abc-kft/rendelesek/k7f3q9x2mnpq`
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+- Az útvonalból leolvasható, melyik ügyfél melyik folyamata küld — de a titok nélkül nem kitalálható.
+- A titok cserélhető a felületen (**Beállítások → Új titok**); ilyenkor a régi URL azonnal 404-et ad.
+- Bármi ráfűzhető a végére (a rendszer eltárolja), és a `/404`-hez hasonló záró szegmens felülírja a
+  visszaadott státuszkódot.
+- Átnevezés **nem** változtatja meg az URL-t: az útvonalat a slug adja, ami a létrehozáskor rögzül.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Szabályok
 
-## Laravel Sponsors
+Egy szabály vagy egy endpointhoz, vagy egy csoporthoz tartozik. A **csoportra tett szabály az alatta lévő
+összes endpointra lefut** — így pl. „minden ABC Kft.-s hibás státusz esetén szólj” egy helyen megírható.
+A szabályok prioritás szerint futnak; a `stop_processing` bekapcsolásával egy találat lezárja a sort.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+Feltétel-források: `json` (a feldolgozott test – JSON, form-urlencoded és multipart is), `header`,
+`query`, `meta` (method, ip, url, size, content_type…), `body` (nyers szöveg).
 
-### Premium Partners
+Mezőhivatkozás pont-jelöléssel: `order.items.0.sku`, illetve `order.items.*.sku` az összes elemre.
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+Operátorok: `equals`, `not_equals`, `contains`, `not_contains`, `starts_with`, `ends_with`, `regex`,
+`not_regex`, `gt`, `gte`, `lt`, `lte`, `in`, `not_in`, `exists`, `not_exists`, `is_empty`, `is_not_empty`,
+`is_true`, `is_false`. A számokat számként hasonlítja (a `"1 234"` alakot is), dátumot időbélyegként.
 
-## Contributing
+A szerkesztőben a **Kipróbálás a legutóbbi üzeneten** gomb megmutatja, illeszkedne-e a szabály, és
+feltételenként kiírja, mi lett az eredmény.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## E-mail sablonok
 
-## Code of Conduct
+A tárgy és a törzs [Twig](https://twig.symfony.com/) sablon, **homokozóban** futtatva: csak engedélyezett
+tagek és szűrők mennek, függvény- és metódushívás nincs, a beérkezett adatok HTML-escape-elve kerülnek be.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```twig
+<style>.total { font-size: 20px; font-weight: 700; color: #2563eb }</style>
 
-## Security Vulnerabilities
+<h2>Köszönjük a rendelést, {{ json.customer.name|default('Kedves Ügyfél') }}!</h2>
+<p>Azonosító: <strong>{{ json.order.id }}</strong></p>
+<p class="total">{{ json.order.total|huf }}</p>
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+{% for tetel in json.order.items %}
+  <p>{{ tetel.sku }} – {{ tetel.db }} db</p>
+{% endfor %}
 
-## License
+{{ json|table }}
+<p>Beérkezett: {{ meta.received_at_hu }}</p>
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Elérhető változók: `json`, `body`, `headers`, `query`, `meta`, `endpoint`, `group`.
+Saját szűrők: `huf` (24990 → „24 990 Ft”), `table` (tömb → HTML-táblázat), `json_pretty`, `hu_date`.
+A `<style>` blokk küldés előtt inline stílusokká alakul, hogy a levelezőkliensek is helyesen mutassák.
+
+A címzett is sablon lehet: `{{ json.customer.email }}, iroda@ceg.hu`. Az érvénytelen címeket a rendszer
+kiszűri; ha nem marad egy sem, az akció hibás státusszal kerül a naplóba (a beérkezett üzenet megmarad).
+
+## Fejlesztés
+
+Nincs szükség helyi PHP-ra, minden konténerben fut:
+
+```bash
+docker compose -f docker/dev/compose.yml up -d      # Postgres + app (:8090) + queue worker
+./php php artisan migrate                            # artisan a konténerben
+./php php artisan db:seed --class=DemoSeeder         # példa csoport + endpoint + szabály
+./php php artisan webhook:admin te@pelda.hu --password=…
+npm install && npm run build                         # frontend
+./php php artisan test                               # tesztek
+```
+
+## Telepítés
+
+A `Dockerfile` háromlépcsős: Vite build → composer install → futtatókörnyezet (nginx + php-fpm +
+supervisord, ami a queue workert és az ütemezőt is viszi). Az induláskor lefut a migráció, és ha az
+`ADMIN_EMAIL`/`ADMIN_PASSWORD` be van állítva, létrejön (vagy frissül) az admin felhasználó.
+
+A `docker/prod/stack.yml` a Portainer-stack: app + Postgres névvel ellátott kötetben.
+
+Fontosabb környezeti változók:
+
+| Változó | Jelentés |
+| --- | --- |
+| `APP_URL` | Ezzel a hosttal generálódnak a webhook-URL-ek |
+| `SESSION_SECURE` | HTTPS mögött `true`, sima HTTP-s eléréshez `false` (különben nem megy a belépés) |
+| `WEBHOOK_MAX_BODY_BYTES` | Ekkora méretig tároljuk a testet (fölötte csonkolva, jelzéssel) |
+| `WEBHOOK_INGEST_RATE_LIMIT` | Beérkező kérés / perc / IP (0 = korlátlan) |
+| `WEBHOOK_RETENTION_DAYS` | Globális alapértelmezett megőrzés; üresen: örökre |
+| `WEBHOOK_ALLOWED_RECIPIENTS` | Ha kitöltöd, csak ezekre a mintákra illeszkedő címre megy levél |
+| `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Induláskor létrehozandó/frissítendő admin |
+
+## Licenc
+
+MIT – az eredeti webhook.site projekt licencét megtartva (lásd `LICENSE`).

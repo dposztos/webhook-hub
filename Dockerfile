@@ -1,0 +1,53 @@
+# syntax=docker/dockerfile:1
+
+# 1) Frontend build
+FROM node:22-alpine AS assets
+WORKDIR /build
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY vite.config.js ./
+COPY resources ./resources
+RUN npm run build
+
+# 2) PHP függőségek
+FROM composer:2 AS vendor
+WORKDIR /build
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist --ignore-platform-req=php
+COPY . .
+RUN composer dump-autoload --optimize --no-dev
+
+# 3) Futtatókörnyezet: nginx + php-fpm egy konténerben, supervisord alatt
+FROM php:8.4-fpm-alpine
+
+RUN apk add --no-cache nginx supervisor postgresql-dev icu-dev libzip-dev tzdata \
+    && apk add --no-cache --virtual .build-deps $PHPIZE_DEPS \
+    && docker-php-ext-install -j$(nproc) pdo_pgsql pcntl intl zip bcmath opcache \
+    && apk del .build-deps \
+    && rm -rf /var/cache/apk/*
+
+ENV TZ=Europe/Budapest
+
+COPY docker/prod/php.ini /usr/local/etc/php/conf.d/99-app.ini
+COPY docker/prod/nginx.conf /etc/nginx/nginx.conf
+COPY docker/prod/supervisord.conf /etc/supervisord.conf
+COPY docker/prod/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+WORKDIR /app
+COPY --from=vendor /build /app
+COPY --from=assets /build/public/build /app/public/build
+
+# Külön mkdir-ek: az Alpine /bin/sh nem ismeri a {a,b} kifejezést.
+RUN rm -rf /app/docker/dev /app/php \
+    && mkdir -p storage/framework/cache/data \
+    && mkdir -p storage/framework/sessions \
+    && mkdir -p storage/framework/views \
+    && mkdir -p storage/logs bootstrap/cache \
+    && chown -R www-data:www-data storage bootstrap/cache \
+    && chmod -R 775 storage bootstrap/cache
+
+EXPOSE 80
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD ["supervisord", "-c", "/etc/supervisord.conf"]

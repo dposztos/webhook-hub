@@ -1,8 +1,7 @@
 <?php
 
-use Illuminate\Foundation\Inspiring;
-use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schedule;
 
-Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote');
+// Megőrzési szabályok érvényesítése. Alapból nincs mit tenni:
+// az endpointok addig őriznek mindent, amíg nem állítasz be korlátot.
+Schedule::command('webhook:prune')->dailyAt('03:30');
