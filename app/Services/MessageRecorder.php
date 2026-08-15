@@ -93,16 +93,25 @@ class MessageRecorder
             $parsed = [];
             parse_str($raw, $parsed);
 
-            return $parsed ?: null;
+            return $parsed ?: $this->postFields($request);
         }
 
         if (str_starts_with($type, 'multipart/form-data')) {
-            $post = $request->post();
-
-            return is_array($post) && $post ? $post : null;
+            return $this->postFields($request);
         }
 
-        return null;
+        // Content-Type nélkül érkező űrlap-mezők (van, aki így küld)
+        return $this->postFields($request);
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function postFields(Request $request): ?array
+    {
+        $post = $request->post();
+
+        return is_array($post) && $post ? $post : null;
     }
 
     /**
