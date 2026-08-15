@@ -82,43 +82,43 @@ const placeholder = computed(
 
 <template>
     <!-- Csoport: ÉS/VAGY kapcsolat gyerek-feltételek között -->
-    <div v-if="isGroup" class="rounded-lg border border-slate-200 bg-slate-50 p-2">
+    <div v-if="isGroup" class="rounded-lg border border-slate-200 bg-slate-50 p-2 dark:bg-slate-800/40 dark:border-slate-800">
         <div class="mb-2 flex items-center gap-2 text-xs">
-            <span class="text-slate-500">Teljesüljön</span>
+            <span class="text-slate-500 dark:text-slate-400">Teljesüljön</span>
             <select
                 :value="node.op"
-                class="rounded border border-slate-300 bg-white px-1.5 py-0.5"
+                class="rounded border border-slate-300 bg-white px-1.5 py-0.5 dark:bg-slate-900 dark:border-slate-700"
                 @change="patch({ op: $event.target.value })"
             >
                 <option value="and">MINDEN</option>
                 <option value="or">BÁRMELYIK</option>
             </select>
-            <span class="text-slate-500">alábbi feltétel</span>
+            <span class="text-slate-500 dark:text-slate-400">alábbi feltétel</span>
 
-            <label class="ml-2 flex items-center gap-1 text-slate-500">
+            <label class="ml-2 flex items-center gap-1 text-slate-500 dark:text-slate-400">
                 <input
                     type="checkbox"
                     :checked="!!node.not"
-                    class="rounded border-slate-300"
+                    class="rounded border-slate-300 dark:border-slate-700"
                     @change="patch({ not: $event.target.checked })"
                 />
                 tagadva
             </label>
 
             <div class="ml-auto flex gap-1">
-                <button class="rounded px-1.5 py-0.5 text-blue-600 hover:bg-blue-50" @click="addCondition">
+                <button class="rounded px-1.5 py-0.5 text-blue-600 hover:bg-blue-50 dark:text-blue-400" @click="addCondition">
                     + feltétel
                 </button>
-                <button class="rounded px-1.5 py-0.5 text-slate-500 hover:bg-slate-200" @click="addGroup">
+                <button class="rounded px-1.5 py-0.5 text-slate-500 hover:bg-slate-200 dark:text-slate-400 dark:hover:bg-slate-700" @click="addGroup">
                     + alcsoport
                 </button>
-                <button v-if="!root" class="rounded px-1.5 py-0.5 text-red-500 hover:bg-red-50" @click="emit('remove')">
+                <button v-if="!root" class="rounded px-1.5 py-0.5 text-red-500 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/50" @click="emit('remove')">
                     ✕
                 </button>
             </div>
         </div>
 
-        <p v-if="!node.children?.length" class="px-1 py-2 text-xs text-slate-400">
+        <p v-if="!node.children?.length" class="px-1 py-2 text-xs text-slate-400 dark:text-slate-500">
             Nincs feltétel – a szabály <strong>minden</strong> beérkező üzenetre lefut.
         </p>
 
@@ -135,10 +135,10 @@ const placeholder = computed(
     </div>
 
     <!-- Egyetlen feltétel -->
-    <div v-else class="flex flex-wrap items-center gap-1.5 rounded-lg border border-slate-200 bg-white p-2 text-xs">
+    <div v-else class="flex flex-wrap items-center gap-1.5 rounded-lg border border-slate-200 bg-white p-2 text-xs dark:bg-slate-900 dark:border-slate-800">
         <select
             :value="node.source"
-            class="rounded border border-slate-300 px-1.5 py-1"
+            class="rounded border border-slate-300 px-1.5 py-1 dark:border-slate-700"
             @change="patch({ source: $event.target.value })"
         >
             <option v-for="source in SOURCES" :key="source.value" :value="source.value">{{ source.label }}</option>
@@ -148,13 +148,13 @@ const placeholder = computed(
             v-if="node.source !== 'body'"
             :value="node.path"
             :placeholder="placeholder"
-            class="w-52 rounded border border-slate-300 px-2 py-1 font-mono"
+            class="w-52 rounded border border-slate-300 px-2 py-1 font-mono dark:border-slate-700"
             @input="patch({ path: $event.target.value })"
         />
 
         <select
             :value="node.operator"
-            class="rounded border border-slate-300 px-1.5 py-1"
+            class="rounded border border-slate-300 px-1.5 py-1 dark:border-slate-700"
             @change="patch({ operator: $event.target.value })"
         >
             <option v-for="operator in OPERATORS" :key="operator.value" :value="operator.value">
@@ -166,20 +166,20 @@ const placeholder = computed(
             v-if="needsValue"
             :value="node.value"
             placeholder="érték"
-            class="min-w-0 flex-1 rounded border border-slate-300 px-2 py-1 font-mono"
+            class="min-w-0 flex-1 rounded border border-slate-300 px-2 py-1 font-mono dark:border-slate-700"
             @input="patch({ value: $event.target.value })"
         />
 
-        <label v-if="needsValue" class="flex items-center gap-1 text-slate-500" title="Kis- és nagybetű mindegy">
+        <label v-if="needsValue" class="flex items-center gap-1 text-slate-500 dark:text-slate-400" title="Kis- és nagybetű mindegy">
             <input
                 type="checkbox"
                 :checked="!!node.ci"
-                class="rounded border-slate-300"
+                class="rounded border-slate-300 dark:border-slate-700"
                 @change="patch({ ci: $event.target.checked })"
             />
             Aa
         </label>
 
-        <button class="rounded px-1.5 py-1 text-red-500 hover:bg-red-50" @click="emit('remove')">✕</button>
+        <button class="rounded px-1.5 py-1 text-red-500 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/50" @click="emit('remove')">✕</button>
     </div>
 </template>

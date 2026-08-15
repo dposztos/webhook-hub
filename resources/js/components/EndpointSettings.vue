@@ -77,9 +77,9 @@ const copyUrl = async () => {
             <div>
                 <label class="lbl">Webhook URL</label>
                 <div class="flex gap-2">
-                    <code class="min-w-0 flex-1 truncate rounded-lg bg-slate-100 px-3 py-2 font-mono text-xs">{{ form.url }}</code>
+                    <code class="min-w-0 flex-1 truncate rounded-lg bg-slate-100 px-3 py-2 font-mono text-xs dark:bg-slate-800">{{ form.url }}</code>
                     <button class="btn-secondary" @click="copyUrl">Másolás</button>
-                    <button class="btn-secondary text-amber-700" @click="rotate">Új titok</button>
+                    <button class="btn-secondary text-amber-700 dark:text-amber-300" @click="rotate">Új titok</button>
                 </div>
                 <p class="hint">Az útvonal a csoport-hierarchiából és a névből áll, a végén a titok. Átnevezéskor az URL nem változik.</p>
             </div>
@@ -90,8 +90,8 @@ const copyUrl = async () => {
                     <input v-model="form.name" class="inp" />
                 </div>
                 <div class="flex items-end">
-                    <label class="flex items-center gap-2 pb-2 text-sm text-slate-700">
-                        <input v-model="form.enabled" type="checkbox" class="rounded border-slate-300" />
+                    <label class="flex items-center gap-2 pb-2 text-sm text-slate-700 dark:text-slate-300">
+                        <input v-model="form.enabled" type="checkbox" class="rounded border-slate-300 dark:border-slate-700" />
                         Aktív (kikapcsolva 404-et ad)
                     </label>
                 </div>
@@ -102,8 +102,8 @@ const copyUrl = async () => {
                 <textarea v-model="form.description" rows="2" class="inp"></textarea>
             </div>
 
-            <fieldset class="rounded-lg border border-slate-200 p-3">
-                <legend class="px-1 text-xs font-semibold uppercase tracking-wide text-slate-400">Válasz a küldőnek</legend>
+            <fieldset class="rounded-lg border border-slate-200 p-3 dark:border-slate-800">
+                <legend class="px-1 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">Válasz a küldőnek</legend>
 
                 <div class="grid grid-cols-3 gap-3">
                     <div>
@@ -125,14 +125,14 @@ const copyUrl = async () => {
                     <textarea v-model="form.response_body" rows="2" class="inp font-mono text-xs"></textarea>
                 </div>
 
-                <label class="mt-3 flex items-center gap-2 text-sm text-slate-700">
-                    <input v-model="form.cors" type="checkbox" class="rounded border-slate-300" />
+                <label class="mt-3 flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+                    <input v-model="form.cors" type="checkbox" class="rounded border-slate-300 dark:border-slate-700" />
                     CORS fejlécek küldése
                 </label>
             </fieldset>
 
-            <fieldset class="rounded-lg border border-slate-200 p-3">
-                <legend class="px-1 text-xs font-semibold uppercase tracking-wide text-slate-400">Megőrzés</legend>
+            <fieldset class="rounded-lg border border-slate-200 p-3 dark:border-slate-800">
+                <legend class="px-1 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">Megőrzés</legend>
                 <p class="hint mb-2">Üresen hagyva minden üzenet örökre megmarad.</p>
 
                 <div class="grid grid-cols-2 gap-3">
@@ -151,7 +151,7 @@ const copyUrl = async () => {
         <template #footer>
             <button class="btn-primary" :disabled="saving" @click="save">Mentés</button>
             <button class="btn-secondary" @click="emit('close')">Mégse</button>
-            <span class="ml-auto text-xs text-slate-400">{{ form.messages_count }} tárolt üzenet</span>
+            <span class="ml-auto text-xs text-slate-400 dark:text-slate-500">{{ form.messages_count }} tárolt üzenet</span>
         </template>
     </ModalShell>
 </template>

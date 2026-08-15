@@ -92,7 +92,7 @@ const saved = () => {
         wide
         @close="emit('close')"
     >
-        <p class="mb-3 text-sm text-slate-500">
+        <p class="mb-3 text-sm text-slate-500 dark:text-slate-400">
             <template v-if="selection.type === 'group'">
                 A csoportra tett szabály az alatta lévő <strong>összes</strong> URL-re lefut.
             </template>
@@ -102,21 +102,21 @@ const saved = () => {
             </template>
         </p>
 
-        <p v-if="loading" class="py-6 text-center text-sm text-slate-400">Betöltés…</p>
+        <p v-if="loading" class="py-6 text-center text-sm text-slate-400 dark:text-slate-500">Betöltés…</p>
 
-        <p v-else-if="!rules.length" class="rounded-lg border border-dashed border-slate-300 py-8 text-center text-sm text-slate-400">
+        <p v-else-if="!rules.length" class="rounded-lg border border-dashed border-slate-300 py-8 text-center text-sm text-slate-400 dark:border-slate-700 dark:text-slate-500">
             Még nincs szabály.
         </p>
 
         <div
             v-for="rule in rules"
             :key="rule.id"
-            class="mb-2 flex items-center gap-3 rounded-lg border border-slate-200 px-3 py-2"
+            class="mb-2 flex items-center gap-3 rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-800"
             :class="{ 'opacity-60': !rule.enabled }"
         >
             <div class="min-w-0 flex-1">
-                <p class="truncate text-sm font-medium text-slate-800">{{ rule.name }}</p>
-                <p class="truncate text-xs text-slate-500">
+                <p class="truncate text-sm font-medium text-slate-800 dark:text-slate-200">{{ rule.name }}</p>
+                <p class="truncate text-xs text-slate-500 dark:text-slate-400">
                     {{ rule.actions?.length ?? 0 }} akció · prioritás {{ rule.priority }}
                     <span v-if="rule.match_count"> · {{ rule.match_count }}× illeszkedett</span>
                     <span v-if="rule.stop_processing"> · itt megáll a feldolgozás</span>

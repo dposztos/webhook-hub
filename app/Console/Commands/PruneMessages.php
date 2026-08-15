@@ -21,6 +21,7 @@ class PruneMessages extends Command
 
         Endpoint::query()->chunkById(100, function ($endpoints) use (&$deleted, $dryRun, $defaultDays) {
             foreach ($endpoints as $endpoint) {
+                $before = $deleted;
                 $days = $endpoint->retention_days ?? $defaultDays;
 
                 if ($days) {
@@ -41,6 +42,10 @@ class PruneMessages extends Command
                         $query = Message::where('endpoint_id', $endpoint->id)->where('id', '<', $keepFrom);
                         $deleted += $dryRun ? $query->count() : $query->delete();
                     }
+                }
+
+                if (! $dryRun && $deleted > $before) {
+                    $endpoint->recountMessages();
                 }
             }
         });

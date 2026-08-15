@@ -27,12 +27,12 @@ export function formatSize(bytes) {
 
 export const methodColor = (method) =>
     ({
-        GET: 'bg-sky-100 text-sky-700',
-        POST: 'bg-emerald-100 text-emerald-700',
-        PUT: 'bg-amber-100 text-amber-700',
-        PATCH: 'bg-amber-100 text-amber-700',
-        DELETE: 'bg-red-100 text-red-700',
-    })[method] ?? 'bg-slate-100 text-slate-600';
+        GET: 'bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300',
+        POST: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300',
+        PUT: 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300',
+        PATCH: 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300',
+        DELETE: 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300',
+    })[method] ?? 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300';
 
 export async function copyText(text) {
     try {

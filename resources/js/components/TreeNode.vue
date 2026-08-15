@@ -74,12 +74,12 @@ const run = async (fn, message) => {
     <div>
         <div
             class="group relative flex items-center gap-1 rounded-lg px-1.5 py-1 text-sm"
-            :class="selected ? 'bg-blue-50 text-blue-900' : 'text-slate-700 hover:bg-slate-50'"
+            :class="selected ? 'bg-blue-50 text-blue-900 dark:bg-blue-950 dark:text-blue-100' : 'text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800'"
             :style="{ paddingLeft: `${depth * 12 + 6}px` }"
         >
             <button
                 v-if="isGroup"
-                class="w-4 shrink-0 text-slate-400 hover:text-slate-700"
+                class="w-4 shrink-0 text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-200"
                 @click.stop="open = !open"
             >
                 {{ open ? '▾' : '▸' }}
@@ -107,23 +107,23 @@ const run = async (fn, message) => {
 
                 <span
                     v-if="!isGroup && node.messages_count"
-                    class="ml-auto shrink-0 rounded-full bg-slate-100 px-1.5 text-[11px] text-slate-500"
+                    class="ml-auto shrink-0 rounded-full bg-slate-100 px-1.5 text-[11px] text-slate-500 dark:bg-slate-800 dark:text-slate-400"
                     :title="`Utolsó üzenet: ${relativeTime(node.last_message_at)}`"
                 >
                     {{ node.messages_count }}
                 </span>
                 <span
                     v-if="node.rules_count"
-                    class="shrink-0 text-[11px] text-emerald-600"
+                    class="shrink-0 text-[11px] text-emerald-600 dark:text-emerald-400"
                     :title="`${node.rules_count} aktív szabály`"
                 >
                     ⚡ {{ node.rules_count }}
                 </span>
-                <span v-if="!isGroup && node.enabled === false" class="shrink-0 text-[11px] text-red-500">szünetel</span>
+                <span v-if="!isGroup && node.enabled === false" class="shrink-0 text-[11px] text-red-500 dark:text-red-400">szünetel</span>
             </button>
 
             <button
-                class="shrink-0 rounded px-1 text-slate-400 opacity-0 group-hover:opacity-100 hover:bg-slate-200"
+                class="shrink-0 rounded px-1 text-slate-400 opacity-0 group-hover:opacity-100 hover:bg-slate-200 dark:text-slate-500 dark:hover:bg-slate-700"
                 @click.stop="menu = !menu"
             >
                 ⋯
@@ -131,7 +131,7 @@ const run = async (fn, message) => {
 
             <div
                 v-if="menu"
-                class="absolute right-1 top-7 z-20 w-52 overflow-hidden rounded-lg border border-slate-200 bg-white py-1 text-sm shadow-lg"
+                class="absolute right-1 top-7 z-20 w-52 overflow-hidden rounded-lg border border-slate-200 bg-white py-1 text-sm shadow-lg dark:bg-slate-900 dark:border-slate-800"
                 @mouseleave="menu = false"
             >
                 <template v-if="isGroup">
@@ -148,7 +148,7 @@ const run = async (fn, message) => {
                     Szabályok…
                 </button>
                 <button class="menu-item" @click="rename">Átnevezés…</button>
-                <button class="menu-item text-red-600" @click="remove">Törlés…</button>
+                <button class="menu-item text-red-600 dark:text-red-400" @click="remove">Törlés…</button>
             </div>
         </div>
 

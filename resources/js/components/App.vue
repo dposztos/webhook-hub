@@ -8,6 +8,7 @@ import RulesPanel from './RulesPanel.vue';
 import EndpointSettings from './EndpointSettings.vue';
 import GroupSettings from './GroupSettings.vue';
 import ToastStack from './ToastStack.vue';
+import { MODES, MODE_LABELS, applyMode, storedMode, watchSystem } from '../theme';
 
 const tree = ref({ groups: [], endpoints: [] });
 const selection = ref(null); // { type: 'group'|'endpoint', id, name }
@@ -154,6 +155,16 @@ onMounted(async () => {
 
 onUnmounted(() => clearInterval(timer));
 
+// Téma: rendszer → világos → sötét körben
+const themeMode = ref(storedMode());
+
+const nextTheme = () => {
+    themeMode.value = MODES[(MODES.indexOf(themeMode.value) + 1) % MODES.length];
+    applyMode(themeMode.value);
+};
+
+watchSystem(() => applyMode('system'));
+
 const logout = () => {
     const form = document.createElement('form');
     form.method = 'POST';
@@ -166,19 +177,43 @@ const logout = () => {
 
 <template>
     <div class="flex h-full flex-col">
-        <header class="flex items-center gap-4 border-b border-slate-200 bg-white px-4 py-2.5">
-            <div class="flex items-center gap-2 font-semibold text-slate-900">
+        <header class="flex items-center gap-4 border-b border-slate-200 bg-white px-4 py-2.5 dark:bg-slate-900 dark:border-slate-800">
+            <div class="flex items-center gap-2 font-semibold text-slate-900 dark:text-slate-100">
                 <span class="grid h-7 w-7 place-items-center rounded-lg bg-blue-600 text-sm text-white">W</span>
                 Webhook Hub
             </div>
 
             <div class="ml-auto flex items-center gap-3 text-sm">
-                <label class="flex cursor-pointer items-center gap-1.5 text-slate-600">
-                    <input v-model="autoRefresh" type="checkbox" class="rounded border-slate-300" />
+                <label class="flex cursor-pointer items-center gap-1.5 text-slate-600 dark:text-slate-400">
+                    <input v-model="autoRefresh" type="checkbox" class="rounded border-slate-300 dark:border-slate-700" />
                     Élő frissítés
                 </label>
-                <button class="text-slate-500 hover:text-slate-800" @click="refreshAll(false)">Frissítés</button>
-                <button class="text-slate-500 hover:text-slate-800" @click="logout">Kilépés</button>
+                <button class="text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200" @click="refreshAll(false)">Frissítés</button>
+
+                <button
+                    class="rounded px-1.5 py-1 text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                    :title="`Téma: ${MODE_LABELS[themeMode]} (kattints a váltáshoz)`"
+                    @click="nextTheme"
+                >
+                    <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <!-- rendszer: monitor -->
+                        <path
+                            v-if="themeMode === 'system'"
+                            d="M3 4a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-4.5l.5 2h1.5a.5.5 0 0 1 0 1h-7a.5.5 0 0 1 0-1H8l.5-2H4a1 1 0 0 1-1-1zm1.5.5v7h11v-7z"
+                        />
+                        <!-- világos: nap -->
+                        <path
+                            v-else-if="themeMode === 'light'"
+                            d="M10 4a.75.75 0 0 1-.75-.75V2a.75.75 0 0 1 1.5 0v1.25A.75.75 0 0 1 10 4m0 12a.75.75 0 0 1 .75.75V18a.75.75 0 0 1-1.5 0v-1.25A.75.75 0 0 1 10 16m6-6a.75.75 0 0 1 .75-.75H18a.75.75 0 0 1 0 1.5h-1.25A.75.75 0 0 1 16 10m-12 0a.75.75 0 0 1-.75.75H2a.75.75 0 0 1 0-1.5h1.25A.75.75 0 0 1 4 10m10.24-4.24a.75.75 0 0 1 0-1.06l.88-.89a.75.75 0 1 1 1.07 1.07l-.89.88a.75.75 0 0 1-1.06 0m-9.55 9.55a.75.75 0 0 1 0-1.06l.89-.89a.75.75 0 0 1 1.06 1.07l-.88.88a.75.75 0 0 1-1.07 0m10.61 0a.75.75 0 0 1-1.06 0l-.89-.88a.75.75 0 0 1 1.06-1.07l.89.89a.75.75 0 0 1 0 1.06M5.76 5.76a.75.75 0 0 1-1.07 0l-.88-.88A.75.75 0 0 1 4.88 3.8l.88.89a.75.75 0 0 1 0 1.06M10 6.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7"
+                        />
+                        <!-- sötét: hold -->
+                        <path
+                            v-else
+                            d="M9.3 2.1a.75.75 0 0 1 .2.85 6 6 0 0 0 7.55 7.55.75.75 0 0 1 .95.95A7.5 7.5 0 1 1 8.45 1.9a.75.75 0 0 1 .85.2"
+                        />
+                    </svg>
+                </button>
+                <button class="text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200" @click="logout">Kilépés</button>
             </div>
         </header>
 

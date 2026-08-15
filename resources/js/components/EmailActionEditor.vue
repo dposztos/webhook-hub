@@ -72,14 +72,14 @@ const runPreview = async (send = false) => {
 </script>
 
 <template>
-    <div class="rounded-lg border border-slate-200">
-        <div class="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-3 py-2">
-            <span class="text-sm font-medium text-slate-700">E-mail küldése</span>
-            <label class="ml-2 flex items-center gap-1 text-xs text-slate-500">
+    <div class="rounded-lg border border-slate-200 dark:border-slate-800">
+        <div class="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-3 py-2 dark:bg-slate-800/40 dark:border-slate-800">
+            <span class="text-sm font-medium text-slate-700 dark:text-slate-300">E-mail küldése</span>
+            <label class="ml-2 flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
                 <input
                     type="checkbox"
                     :checked="action.enabled !== false"
-                    class="rounded border-slate-300"
+                    class="rounded border-slate-300 dark:border-slate-700"
                     @change="emit('update', { ...action, enabled: $event.target.checked })"
                 />
                 aktív
@@ -122,7 +122,7 @@ const runPreview = async (send = false) => {
             <div>
                 <div class="flex items-center gap-2">
                     <label class="lbl mb-0">Levél törzse (HTML + változók)</label>
-                    <button class="ml-auto text-xs text-blue-600 hover:underline" @click="insertTemplate">
+                    <button class="ml-auto text-xs text-blue-600 hover:underline dark:text-blue-400" @click="insertTemplate">
                         Alapsablon beillesztése
                     </button>
                 </div>
@@ -143,27 +143,27 @@ const runPreview = async (send = false) => {
             </div>
 
             <div class="flex flex-wrap items-center gap-2">
-                <label class="flex items-center gap-1.5 text-xs text-slate-600">
+                <label class="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
                     <input
                         type="checkbox"
                         :checked="action.config.inline_css !== false"
-                        class="rounded border-slate-300"
+                        class="rounded border-slate-300 dark:border-slate-700"
                         @change="patch({ inline_css: $event.target.checked })"
                     />
                     CSS beágyazása a stílusokba (levelezőkliens-barát)
                 </label>
-                <label class="flex items-center gap-1.5 text-xs text-slate-600">
+                <label class="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
                     <input
                         type="checkbox"
                         :checked="!!action.config.attach_json"
-                        class="rounded border-slate-300"
+                        class="rounded border-slate-300 dark:border-slate-700"
                         @change="patch({ attach_json: $event.target.checked })"
                     />
                     JSON csatolása mellékletként
                 </label>
             </div>
 
-            <div class="flex flex-wrap items-center gap-2 rounded-lg bg-slate-50 p-2">
+            <div class="flex flex-wrap items-center gap-2 rounded-lg bg-slate-50 p-2 dark:bg-slate-800/40">
                 <button class="btn-secondary text-xs" :disabled="testing" @click="runPreview(false)">
                     Előnézet a legutóbbi üzenettel
                 </button>
@@ -173,9 +173,9 @@ const runPreview = async (send = false) => {
                 </button>
             </div>
 
-            <div v-if="preview" class="rounded-lg border border-slate-200">
-                <div class="border-b border-slate-200 bg-white px-3 py-2 text-xs">
-                    <p v-if="preview.error" class="text-red-600">{{ preview.error }}</p>
+            <div v-if="preview" class="rounded-lg border border-slate-200 dark:border-slate-800">
+                <div class="border-b border-slate-200 bg-white px-3 py-2 text-xs dark:bg-slate-900 dark:border-slate-800">
+                    <p v-if="preview.error" class="text-red-600 dark:text-red-400">{{ preview.error }}</p>
                     <template v-else>
                         <p><strong>Címzett:</strong> {{ preview.preview.to.join(', ') || '—' }}</p>
                         <p><strong>Tárgy:</strong> {{ preview.preview.subject }}</p>
@@ -185,7 +185,7 @@ const runPreview = async (send = false) => {
                     v-if="preview.preview?.html"
                     :srcdoc="preview.preview.html"
                     sandbox=""
-                    class="h-64 w-full bg-white"
+                    class="h-64 w-full bg-white dark:bg-slate-900"
                 ></iframe>
             </div>
         </div>

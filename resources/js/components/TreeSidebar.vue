@@ -43,12 +43,12 @@ const addRootEndpoint = async () => {
 </script>
 
 <template>
-    <aside class="flex w-72 shrink-0 flex-col border-r border-slate-200 bg-white">
+    <aside class="flex w-72 shrink-0 flex-col border-r border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800">
         <div class="flex items-center justify-between px-3 py-2.5">
-            <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-400">Csoportok és URL-ek</h2>
+            <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">Csoportok és URL-ek</h2>
             <div class="flex gap-1">
                 <button
-                    class="rounded px-1.5 py-0.5 text-lg leading-none text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                    class="rounded px-1.5 py-0.5 text-lg leading-none text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                     title="Új főcsoport"
                     :disabled="busy"
                     @click="addRootGroup"
@@ -72,7 +72,7 @@ const addRootEndpoint = async () => {
             />
 
             <template v-if="tree.endpoints?.length">
-                <p class="mt-3 px-2 text-[11px] uppercase tracking-wide text-slate-400">Csoport nélkül</p>
+                <p class="mt-3 px-2 text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">Csoport nélkül</p>
                 <TreeNode
                     v-for="endpoint in tree.endpoints"
                     :key="`e-${endpoint.id}`"
@@ -86,13 +86,13 @@ const addRootEndpoint = async () => {
                 />
             </template>
 
-            <p v-if="!tree.groups?.length && !tree.endpoints?.length" class="px-3 py-6 text-center text-sm text-slate-400">
+            <p v-if="!tree.groups?.length && !tree.endpoints?.length" class="px-3 py-6 text-center text-sm text-slate-400 dark:text-slate-500">
                 Még nincs semmi.<br />Hozz létre egy csoportot a + gombbal.
             </p>
         </div>
 
         <button
-            class="border-t border-slate-200 px-3 py-2 text-left text-xs text-slate-500 hover:bg-slate-50"
+            class="border-t border-slate-200 px-3 py-2 text-left text-xs text-slate-500 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800"
             @click="addRootEndpoint"
         >
             + URL csoport nélkül

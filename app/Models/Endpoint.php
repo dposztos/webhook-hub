@@ -77,6 +77,19 @@ class Endpoint extends Model
     }
 
     /**
+     * A tárolt üzenetszámláló újraszámolása.
+     *
+     * A számláló denormalizált (beérkezéskor növeljük), törléskor viszont
+     * a tömeges törlések nem váltanak ki modell-eseményt – ezért számoljuk újra.
+     */
+    public function recountMessages(): void
+    {
+        $this->forceFill([
+            'messages_count' => Message::where('endpoint_id', $this->id)->count(),
+        ])->save();
+    }
+
+    /**
      * A csoport-hierarchia ID-i a gyökértől (szabály-öröklődéshez).
      *
      * @return array<int, int>

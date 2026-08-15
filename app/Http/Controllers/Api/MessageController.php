@@ -141,9 +141,16 @@ class MessageController extends Controller
 
     public function destroy(string $uuid): JsonResponse
     {
-        Message::where('uuid', $uuid)->firstOrFail()->delete();
+        $message = Message::where('uuid', $uuid)->firstOrFail();
+        $endpoint = $message->endpoint;
 
-        return response()->json(['deleted' => true]);
+        $message->delete();
+        $endpoint?->recountMessages();
+
+        return response()->json([
+            'deleted' => true,
+            'messages_count' => $endpoint?->messages_count,
+        ]);
     }
 
     /**
@@ -152,7 +159,7 @@ class MessageController extends Controller
     public function clear(Endpoint $endpoint): JsonResponse
     {
         $deleted = Message::where('endpoint_id', $endpoint->id)->delete();
-        $endpoint->update(['messages_count' => 0]);
+        $endpoint->recountMessages();
 
         return response()->json(['deleted' => $deleted]);
     }

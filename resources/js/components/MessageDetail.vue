@@ -27,10 +27,22 @@ const copy = async (text, label) => {
     emit('notify', `${label} a vágólapon`, 'success');
 };
 
-const copyPath = async (path) => {
-    await copyText(`{{ ${path} }}`);
-    emit('notify', `Sablon-hivatkozás másolva: {{ ${path} }}`, 'success');
+// Mit tegyen a JSON-fában a mezőnévre kattintás: sablon-hivatkozást vagy értéket másoljon.
+const pickMode = ref('ref');
+
+const onPick = async ({ path, value }) => {
+    if (pickMode.value === 'ref') {
+        await copy(`{{ ${path} }}`, `Hivatkozás ({{ ${path} }})`);
+        return;
+    }
+
+    const text = value !== null && typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value);
+    await copy(text, `${path} értéke`);
 };
+
+const prettyJson = computed(() =>
+    props.detail?.body_json ? JSON.stringify(props.detail.body_json, null, 2) : '',
+);
 
 const replay = async () => {
     try {
@@ -57,39 +69,39 @@ const remove = async () => {
 
 const statusClass = (status) =>
     ({
-        success: 'bg-emerald-50 text-emerald-700 ring-emerald-100',
-        failed: 'bg-red-50 text-red-700 ring-red-100',
-        skipped: 'bg-slate-50 text-slate-600 ring-slate-200',
-    })[status] ?? 'bg-slate-50 text-slate-600 ring-slate-200';
+        success: 'bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/50 dark:text-emerald-300 dark:ring-emerald-900',
+        failed: 'bg-red-50 text-red-700 ring-red-100 dark:bg-red-950/50 dark:text-red-300 dark:ring-red-900',
+        skipped: 'bg-slate-50 text-slate-600 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700',
+    })[status] ?? 'bg-slate-50 text-slate-600 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700';
 </script>
 
 <template>
-    <section v-if="detail" class="flex w-[38rem] shrink-0 flex-col bg-white">
-        <div class="flex items-start gap-2 border-b border-slate-200 px-4 py-2.5">
+    <section v-if="detail" class="flex w-[38rem] shrink-0 flex-col bg-white dark:bg-slate-900">
+        <div class="flex items-start gap-2 border-b border-slate-200 px-4 py-2.5 dark:border-slate-800">
             <div class="min-w-0">
                 <div class="flex items-center gap-2">
                     <span class="rounded px-1.5 py-0.5 text-xs font-semibold" :class="methodColor(detail.method)">
                         {{ detail.method }}
                     </span>
-                    <span class="text-sm text-slate-500">{{ formatTime(detail.created_at) }}</span>
-                    <span class="text-xs text-slate-400">{{ formatSize(detail.size) }}</span>
-                    <span v-if="detail.truncated" class="text-xs text-amber-600" title="A test csonkolva lett tárolva">
+                    <span class="text-sm text-slate-500 dark:text-slate-400">{{ formatTime(detail.created_at) }}</span>
+                    <span class="text-xs text-slate-400 dark:text-slate-500">{{ formatSize(detail.size) }}</span>
+                    <span v-if="detail.truncated" class="text-xs text-amber-600 dark:text-amber-400" title="A test csonkolva lett tárolva">
                         csonkolt
                     </span>
                 </div>
-                <p class="mt-0.5 truncate text-xs text-slate-400">
+                <p class="mt-0.5 truncate text-xs text-slate-400 dark:text-slate-500">
                     {{ detail.ip }} · {{ detail.content_type || 'nincs content-type' }}
                 </p>
             </div>
 
             <div class="ml-auto flex shrink-0 items-center gap-1 text-xs">
                 <button class="btn-ghost" title="Szabályok újrafuttatása erre az üzenetre" @click="replay">Újrafuttat</button>
-                <button class="btn-ghost text-red-600" @click="remove">Törlés</button>
+                <button class="btn-ghost text-red-600 dark:text-red-400" @click="remove">Törlés</button>
                 <button class="btn-ghost" @click="emit('close')">✕</button>
             </div>
         </div>
 
-        <nav class="flex gap-1 border-b border-slate-200 px-3 pt-2 text-sm">
+        <nav class="flex gap-1 border-b border-slate-200 px-3 pt-2 text-sm dark:border-slate-800">
             <button v-for="t in [
                     { key: 'json', label: 'JSON', show: !!detail.body_json },
                     { key: 'raw', label: 'Nyers test', show: true },
@@ -98,7 +110,7 @@ const statusClass = (status) =>
                 ].filter((t) => t.show)"
                 :key="t.key"
                 class="rounded-t-lg px-3 py-1.5"
-                :class="tab === t.key ? 'bg-slate-100 font-medium text-slate-900' : 'text-slate-500 hover:text-slate-800'"
+                :class="tab === t.key ? 'bg-slate-100 font-medium text-slate-900 dark:bg-slate-800 dark:text-slate-100' : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'"
                 @click="tab = t.key"
             >
                 {{ t.label }}
@@ -107,36 +119,60 @@ const statusClass = (status) =>
 
         <div class="min-h-0 flex-1 overflow-y-auto p-4">
             <template v-if="tab === 'json'">
-                <p class="mb-2 text-xs text-slate-400">
-                    Kattints egy mezőnévre: a sablonba illeszthető hivatkozás a vágólapra kerül.
-                </p>
-                <JsonView :value="detail.body_json" path="json" @pick="copyPath" />
+                <div class="mb-3 flex flex-wrap items-center gap-2 rounded-lg bg-slate-50 p-2 text-xs dark:bg-slate-800">
+                    <button class="btn-secondary text-xs" @click="copy(detail.body, 'Nyers JSON')">
+                        Nyers JSON másolása
+                    </button>
+                    <button class="btn-secondary text-xs" @click="copy(prettyJson, 'Formázott JSON')">
+                        Formázva
+                    </button>
+
+                    <span class="ml-auto text-slate-500 dark:text-slate-400">Kattintásra:</span>
+                    <div class="flex overflow-hidden rounded-lg border border-slate-300 dark:border-slate-700">
+                        <button
+                            v-for="option in [
+                                { key: 'ref', label: 'hivatkozás' },
+                                { key: 'value', label: 'érték' },
+                            ]"
+                            :key="option.key"
+                            class="px-2 py-1"
+                            :class="pickMode === option.key
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-white text-slate-600 hover:bg-slate-100 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800'"
+                            @click="pickMode = option.key"
+                        >
+                            {{ option.label }}
+                        </button>
+                    </div>
+                </div>
+
+                <JsonView :value="detail.body_json" path="json" @pick="onPick" />
             </template>
 
             <template v-else-if="tab === 'raw'">
                 <div class="mb-2 flex justify-end">
                     <button class="btn-ghost text-xs" @click="copy(detail.body, 'Nyers test')">Másolás</button>
                 </div>
-                <pre class="overflow-x-auto whitespace-pre-wrap break-all rounded bg-slate-50 p-3 font-mono text-xs text-slate-700">{{ detail.body || '(üres)' }}</pre>
+                <pre class="overflow-x-auto whitespace-pre-wrap break-all rounded bg-slate-50 p-3 font-mono text-xs text-slate-700 dark:bg-slate-900 dark:text-slate-300">{{ detail.body || '(üres)' }}</pre>
             </template>
 
             <template v-else-if="tab === 'headers'">
                 <table class="w-full text-left text-xs">
                     <tbody>
-                        <tr v-for="[name, value] in headerRows" :key="name" class="border-b border-slate-100 align-top">
-                            <th class="w-48 py-1 pr-3 font-medium text-slate-500">{{ name }}</th>
-                            <td class="break-all py-1 font-mono text-slate-700">{{ value }}</td>
+                        <tr v-for="[name, value] in headerRows" :key="name" class="border-b border-slate-100 align-top dark:border-slate-800">
+                            <th class="w-48 py-1 pr-3 font-medium text-slate-500 dark:text-slate-400">{{ name }}</th>
+                            <td class="break-all py-1 font-mono text-slate-700 dark:text-slate-300">{{ value }}</td>
                         </tr>
                     </tbody>
                 </table>
 
                 <template v-if="queryRows.length">
-                    <h3 class="mb-1 mt-4 text-xs font-semibold uppercase tracking-wide text-slate-400">Query paraméterek</h3>
+                    <h3 class="mb-1 mt-4 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">Query paraméterek</h3>
                     <table class="w-full text-left text-xs">
                         <tbody>
-                            <tr v-for="[name, value] in queryRows" :key="name" class="border-b border-slate-100">
-                                <th class="w-48 py-1 pr-3 font-medium text-slate-500">{{ name }}</th>
-                                <td class="break-all py-1 font-mono text-slate-700">{{ value }}</td>
+                            <tr v-for="[name, value] in queryRows" :key="name" class="border-b border-slate-100 dark:border-slate-800">
+                                <th class="w-48 py-1 pr-3 font-medium text-slate-500 dark:text-slate-400">{{ name }}</th>
+                                <td class="break-all py-1 font-mono text-slate-700 dark:text-slate-300">{{ value }}</td>
                             </tr>
                         </tbody>
                     </table>
@@ -144,9 +180,9 @@ const statusClass = (status) =>
             </template>
 
             <template v-else>
-                <p v-if="!detail.runs?.length" class="py-6 text-center text-sm text-slate-400">
+                <p v-if="!detail.runs?.length" class="py-6 text-center text-sm text-slate-400 dark:text-slate-500">
                     Erre az üzenetre nem futott akció.<br />
-                    <button class="mt-2 text-blue-600 hover:underline" @click="emit('make-rule')">
+                    <button class="mt-2 text-blue-600 hover:underline dark:text-blue-400" @click="emit('make-rule')">
                         Szabály készítése ehhez az URL-hez
                     </button>
                 </p>

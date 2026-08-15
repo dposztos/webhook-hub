@@ -97,12 +97,12 @@ const save = async () => {
                     <input v-model="form.priority" type="number" class="inp" />
                 </div>
                 <div class="flex items-end gap-3 pb-1.5">
-                    <label class="flex items-center gap-1.5 text-sm text-slate-700">
-                        <input v-model="form.enabled" type="checkbox" class="rounded border-slate-300" />
+                    <label class="flex items-center gap-1.5 text-sm text-slate-700 dark:text-slate-300">
+                        <input v-model="form.enabled" type="checkbox" class="rounded border-slate-300 dark:border-slate-700" />
                         aktív
                     </label>
-                    <label class="flex items-center gap-1.5 text-sm text-slate-700" title="Ha illeszkedik, a további szabályok már nem futnak le">
-                        <input v-model="form.stop_processing" type="checkbox" class="rounded border-slate-300" />
+                    <label class="flex items-center gap-1.5 text-sm text-slate-700 dark:text-slate-300" title="Ha illeszkedik, a további szabályok már nem futnak le">
+                        <input v-model="form.stop_processing" type="checkbox" class="rounded border-slate-300 dark:border-slate-700" />
                         itt álljon meg
                     </label>
                 </div>
@@ -110,7 +110,7 @@ const save = async () => {
 
             <section>
                 <div class="mb-2 flex items-center gap-2">
-                    <h3 class="text-sm font-semibold text-slate-800">Mikor fusson le?</h3>
+                    <h3 class="text-sm font-semibold text-slate-800 dark:text-slate-200">Mikor fusson le?</h3>
                     <button class="ml-auto btn-secondary text-xs" @click="testConditions">
                         Kipróbálás a legutóbbi üzeneten
                     </button>
@@ -125,7 +125,7 @@ const save = async () => {
                 <div
                     v-if="testResult"
                     class="mt-2 rounded-lg p-3 text-xs ring-1"
-                    :class="testResult.matched ? 'bg-emerald-50 text-emerald-800 ring-emerald-100' : 'bg-slate-50 text-slate-600 ring-slate-200'"
+                    :class="testResult.matched ? 'bg-emerald-50 text-emerald-800 ring-emerald-100 dark:bg-emerald-950/50 dark:text-emerald-200 dark:ring-emerald-900' : 'bg-slate-50 text-slate-600 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700'"
                 >
                     <p class="font-medium">
                         {{ testResult.matched ? '✓ A szabály illeszkedik erre az üzenetre' : '✕ Nem illeszkedik' }}
@@ -138,11 +138,11 @@ const save = async () => {
 
             <section>
                 <div class="mb-2 flex items-center gap-2">
-                    <h3 class="text-sm font-semibold text-slate-800">Mi történjen?</h3>
+                    <h3 class="text-sm font-semibold text-slate-800 dark:text-slate-200">Mi történjen?</h3>
                     <button class="ml-auto btn-secondary text-xs" @click="addEmailAction">+ E-mail akció</button>
                 </div>
 
-                <p v-if="!form.actions.length" class="rounded-lg border border-dashed border-slate-300 py-6 text-center text-sm text-slate-400">
+                <p v-if="!form.actions.length" class="rounded-lg border border-dashed border-slate-300 py-6 text-center text-sm text-slate-400 dark:border-slate-700 dark:text-slate-500">
                     Még nincs akció.
                 </p>
 
