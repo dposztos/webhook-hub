@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue';
 import { api } from '../api';
 import { copyText, formatSize, formatTime, methodColor } from '../format';
 import JsonView from './JsonView.vue';
+import { TOOLS, buildSnippet, targetUrl, usefulHeaders } from '../snippets';
 
 const props = defineProps({
     detail: { type: Object, default: null },
@@ -44,6 +45,21 @@ const onPick = async ({ path, value }) => {
 const prettyJson = computed(() =>
     props.detail?.body_json ? JSON.stringify(props.detail.body_json, null, 2) : '',
 );
+
+// „Küldés” fül: ugyanez a kérés újraküldve, a szokásos eszközökkel
+const tool = ref('curl');
+const allHeaders = ref(false);
+
+const snippet = computed(() =>
+    props.detail ? buildSnippet(tool.value, props.detail, { allHeaders: allHeaders.value }) : '',
+);
+
+const droppedHeaders = computed(() => {
+    if (!props.detail) return 0;
+    return usefulHeaders(props.detail, true).length - usefulHeaders(props.detail, false).length;
+});
+
+const sendTarget = computed(() => (props.detail ? targetUrl(props.detail) : ''));
 
 const replay = async () => {
     try {
@@ -111,6 +127,7 @@ const statusClass = (status) =>
                     { key: 'json', label: 'JSON', show: !!detail.body_json },
                     { key: 'raw', label: 'Nyers test', show: true },
                     { key: 'headers', label: `Fejlécek (${headerRows.length})`, show: true },
+                    { key: 'send', label: 'Küldés', show: true },
                     { key: 'runs', label: `Akciók (${detail.runs?.length ?? 0})`, show: true },
                 ].filter((t) => t.show)"
                 :key="t.key"
@@ -179,6 +196,47 @@ const statusClass = (status) =>
                         </tbody>
                     </table>
                 </template>
+            </template>
+
+            <template v-else-if="tab === 'send'">
+                <p class="mb-3 text-xs text-slate-500 dark:text-slate-400">
+                    Ugyanez a kérés újraküldve — a parancs az endpoint <strong>mostani</strong> címére mutat,
+                    tehát titok-csere után is jó.
+                </p>
+
+                <div class="mb-3 flex flex-wrap gap-1">
+                    <button
+                        v-for="option in TOOLS"
+                        :key="option.key"
+                        class="rounded-lg px-2.5 py-1 text-xs"
+                        :class="tool === option.key
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'"
+                        @click="tool = option.key"
+                    >
+                        {{ option.label }}
+                    </button>
+                </div>
+
+                <div class="mb-2 flex items-center gap-3 text-xs">
+                    <label class="flex items-center gap-1.5 text-slate-600 dark:text-slate-400">
+                        <input v-model="allHeaders" type="checkbox" class="rounded border-slate-300 dark:border-slate-700" />
+                        Minden fejléc
+                        <span v-if="!allHeaders && droppedHeaders" class="text-slate-400 dark:text-slate-500">
+                            ({{ droppedHeaders }} proxy-fejléc kihagyva)
+                        </span>
+                    </label>
+
+                    <button class="btn-secondary ml-auto text-xs" @click="copy(snippet, 'Parancs')">Másolás</button>
+                </div>
+
+                <pre class="overflow-x-auto rounded-lg bg-slate-900 p-3 font-mono text-xs leading-relaxed text-slate-100 dark:bg-slate-950">{{ snippet }}</pre>
+
+                <p v-if="detail.truncated" class="mt-2 text-xs text-amber-600 dark:text-amber-400">
+                    Figyelem: ennek az üzenetnek a testét csonkolva tároltuk, így a parancs sem a teljes tartalmat küldi.
+                </p>
+
+                <p class="hint break-all">Cél: {{ sendTarget }}</p>
             </template>
 
             <template v-else>
