@@ -16,6 +16,9 @@ fi
 
 php artisan migrate --force --no-interaction
 
+# Olcsó önjavítás induláskor: a denormalizált üzenetszámlálók egyeztetése.
+php artisan webhook:recount || true
+
 # Az első indításkor létrehozzuk az admint, ha meg van adva jelszó
 if [ -n "$ADMIN_EMAIL" ] && [ -n "$ADMIN_PASSWORD" ]; then
     php artisan webhook:admin "$ADMIN_EMAIL" --password="$ADMIN_PASSWORD" || true

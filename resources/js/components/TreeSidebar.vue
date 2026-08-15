@@ -6,6 +6,7 @@ import TreeNode from './TreeNode.vue';
 const props = defineProps({
     tree: { type: Object, required: true },
     selection: { type: Object, default: null },
+    width: { type: Number, default: 288 },
 });
 
 const emit = defineEmits(['select', 'changed', 'notify', 'open-settings']);
@@ -43,7 +44,10 @@ const addRootEndpoint = async () => {
 </script>
 
 <template>
-    <aside class="flex w-72 shrink-0 flex-col border-r border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800">
+    <aside
+        class="flex shrink-0 flex-col bg-white dark:bg-slate-900"
+        :style="{ width: `${width}px` }"
+    >
         <div class="flex items-center justify-between px-3 py-2.5">
             <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">Csoportok és URL-ek</h2>
             <div class="flex gap-1">

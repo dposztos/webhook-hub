@@ -8,7 +8,28 @@ import RulesPanel from './RulesPanel.vue';
 import EndpointSettings from './EndpointSettings.vue';
 import GroupSettings from './GroupSettings.vue';
 import ToastStack from './ToastStack.vue';
+import ResizeHandle from './ResizeHandle.vue';
 import { MODES, MODE_LABELS, applyMode, storedMode, watchSystem } from '../theme';
+
+// Panel-szélességek: egérrel húzhatók, és megjegyezzük őket.
+const WIDTH_KEY = 'webhookhub-panels';
+const savedWidths = (() => {
+    try {
+        return JSON.parse(localStorage.getItem(WIDTH_KEY)) ?? {};
+    } catch {
+        return {};
+    }
+})();
+
+const sidebarWidth = ref(savedWidths.sidebar ?? 288);
+const detailWidth = ref(savedWidths.detail ?? 608);
+
+const saveWidths = () => {
+    localStorage.setItem(
+        WIDTH_KEY,
+        JSON.stringify({ sidebar: sidebarWidth.value, detail: detailWidth.value }),
+    );
+};
 
 const tree = ref({ groups: [], endpoints: [] });
 const selection = ref(null); // { type: 'group'|'endpoint', id, name }
@@ -221,10 +242,19 @@ const logout = () => {
             <TreeSidebar
                 :tree="tree"
                 :selection="selection"
+                :width="sidebarWidth"
                 @select="selectNode"
                 @changed="loadTree"
                 @notify="notify"
                 @open-settings="panel = $event"
+            />
+
+            <ResizeHandle
+                v-model:width="sidebarWidth"
+                grows="right"
+                :min="200"
+                :max="640"
+                @done="saveWidths"
             />
 
             <MessageList
@@ -241,8 +271,18 @@ const logout = () => {
                 @notify="notify"
             />
 
+            <ResizeHandle
+                v-if="detail"
+                v-model:width="detailWidth"
+                grows="left"
+                :min="360"
+                :max="1100"
+                @done="saveWidths"
+            />
+
             <MessageDetail
                 :detail="detail"
+                :width="detailWidth"
                 @close="detail = null; activeUuid = null"
                 @changed="refreshAll(false)"
                 @notify="notify"

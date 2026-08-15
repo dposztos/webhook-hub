@@ -6,6 +6,7 @@ import JsonView from './JsonView.vue';
 
 const props = defineProps({
     detail: { type: Object, default: null },
+    width: { type: Number, default: 608 },
 });
 
 const emit = defineEmits(['close', 'changed', 'notify', 'make-rule']);
@@ -76,7 +77,11 @@ const statusClass = (status) =>
 </script>
 
 <template>
-    <section v-if="detail" class="flex w-[38rem] shrink-0 flex-col bg-white dark:bg-slate-900">
+    <section
+        v-if="detail"
+        class="flex shrink-0 flex-col bg-white dark:bg-slate-900"
+        :style="{ width: `${width}px` }"
+    >
         <div class="flex items-start gap-2 border-b border-slate-200 px-4 py-2.5 dark:border-slate-800">
             <div class="min-w-0">
                 <div class="flex items-center gap-2">
@@ -120,11 +125,8 @@ const statusClass = (status) =>
         <div class="min-h-0 flex-1 overflow-y-auto p-4">
             <template v-if="tab === 'json'">
                 <div class="mb-3 flex flex-wrap items-center gap-2 rounded-lg bg-slate-50 p-2 text-xs dark:bg-slate-800">
-                    <button class="btn-secondary text-xs" @click="copy(detail.body, 'Nyers JSON')">
-                        Nyers JSON másolása
-                    </button>
                     <button class="btn-secondary text-xs" @click="copy(prettyJson, 'Formázott JSON')">
-                        Formázva
+                        Formázva másol
                     </button>
 
                     <span class="ml-auto text-slate-500 dark:text-slate-400">Kattintásra:</span>
