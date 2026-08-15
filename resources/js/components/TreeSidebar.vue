@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import { api } from '../api';
 import TreeNode from './TreeNode.vue';
+import { affectedUrls, drag, endDrag } from '../drag';
 
 const props = defineProps({
     tree: { type: Object, required: true },
@@ -12,6 +13,36 @@ const props = defineProps({
 const emit = defineEmits(['select', 'changed', 'notify', 'open-settings']);
 
 const busy = ref(false);
+
+// A lista üres részére ejtve az elem a gyökérbe kerül
+const rootHover = ref(false);
+
+const onRootOver = (event) => {
+    if (!drag.node) return;
+    rootHover.value = true;
+    drag.overKey = null;
+    drag.mode = null;
+    event.preventDefault();
+};
+
+const onRootDrop = async () => {
+    const source = drag.node;
+    rootHover.value = false;
+    endDrag();
+
+    if (!source || (source.parentId ?? null) === null) return;
+
+    const count = affectedUrls(source);
+    if (!window.confirm(`Kiemeled a gyökérbe? Ez ${count} webhook URL címét megváltoztatja.`)) return;
+
+    try {
+        await api.move({ type: source.type, id: source.id, parent_id: null, position: null });
+        emit('changed');
+        emit('notify', 'Áthelyezve a gyökérbe', 'success');
+    } catch (error) {
+        emit('notify', error.message, 'error');
+    }
+};
 
 const addRootGroup = async () => {
     const name = window.prompt('Új főcsoport neve (pl. Ügyfelek)');
@@ -62,13 +93,21 @@ const addRootEndpoint = async () => {
             </div>
         </div>
 
-        <div class="min-h-0 flex-1 overflow-y-auto px-1.5 pb-3">
+        <div
+            class="min-h-0 flex-1 overflow-y-auto px-1.5 pb-3"
+            :class="rootHover ? 'bg-blue-50/60 dark:bg-blue-950/30' : ''"
+            @dragover="onRootOver"
+            @dragleave="rootHover = false"
+            @drop="onRootDrop"
+        >
             <TreeNode
-                v-for="group in tree.groups"
+                v-for="(group, groupIndex) in tree.groups"
                 :key="`g-${group.id}`"
                 :node="group"
                 :depth="0"
                 :selection="selection"
+                :parent-id="null"
+                :index="groupIndex"
                 @select="emit('select', $event)"
                 @changed="emit('changed')"
                 @notify="(m, k) => emit('notify', m, k)"
@@ -78,11 +117,13 @@ const addRootEndpoint = async () => {
             <template v-if="tree.endpoints?.length">
                 <p class="mt-3 px-2 text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">Csoport nélkül</p>
                 <TreeNode
-                    v-for="endpoint in tree.endpoints"
+                    v-for="(endpoint, endpointIndex) in tree.endpoints"
                     :key="`e-${endpoint.id}`"
                     :node="endpoint"
                     :depth="0"
                     :selection="selection"
+                    :parent-id="null"
+                    :index="endpointIndex"
                     @select="emit('select', $event)"
                     @changed="emit('changed')"
                     @notify="(m, k) => emit('notify', m, k)"

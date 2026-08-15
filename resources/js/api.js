@@ -50,6 +50,7 @@ const query = (params) => {
 
 export const api = {
     tree: () => request('GET', '/api/tree'),
+    move: (payload) => request('POST', '/api/tree/move', payload),
 
     createGroup: (payload) => request('POST', '/api/groups', payload),
     updateGroup: (id, payload) => request('PUT', `/api/groups/${id}`, payload),

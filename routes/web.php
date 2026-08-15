@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\GroupController;
 use App\Http\Controllers\Api\MessageController;
 use App\Http\Controllers\Api\RuleController;
 use App\Http\Controllers\Api\TestController;
+use App\Http\Controllers\Api\TreeController;
 use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 
@@ -15,6 +16,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth');
 Route::middleware('auth')->group(function () {
     Route::prefix('api')->group(function () {
         Route::get('/tree', [GroupController::class, 'tree']);
+        Route::post('/tree/move', [TreeController::class, 'move']);
 
         Route::post('/groups', [GroupController::class, 'store']);
         Route::put('/groups/{group}', [GroupController::class, 'update']);

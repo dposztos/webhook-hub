@@ -2,11 +2,14 @@
 import { computed, ref } from 'vue';
 import { api } from '../api';
 import { copyText, relativeTime } from '../format';
+import { affectedUrls, drag, dragKey, endDrag, isInsideDragged, startDrag } from '../drag';
 
 const props = defineProps({
     node: { type: Object, required: true },
     depth: { type: Number, default: 0 },
     selection: { type: Object, default: null },
+    parentId: { type: Number, default: null },
+    index: { type: Number, default: 0 },
 });
 
 const emit = defineEmits(['select', 'changed', 'notify', 'open-settings']);
@@ -21,6 +24,93 @@ const selected = computed(
 
 const select = () =>
     emit('select', { type: props.node.type, id: props.node.id, name: props.node.name, url: props.node.url });
+
+// --- Húzd és ejtsd: átszervezés a fában ---
+const key = computed(() => dragKey(props.node));
+const isDragged = computed(() => drag.node && dragKey(drag.node) === key.value);
+const dropMode = computed(() => (drag.overKey === key.value ? drag.mode : null));
+
+const onDragStart = (event) => {
+    startDrag({ ...props.node, parentId: props.parentId }, props.parentId);
+    event.dataTransfer.effectAllowed = 'move';
+    // A böngésző csak akkor indít húzást, ha van adat a vágólapon
+    event.dataTransfer.setData('text/plain', props.node.name);
+};
+
+const onDragOver = (event) => {
+    if (!drag.node || isDragged.value) return;
+    if (isInsideDragged(props.node.type, props.node.id)) return;
+
+    // A sor „elnyeli” az eseményt, különben a mögötte lévő gyökér-ejtőzóna
+    // (TreeSidebar) törölné a most beállított célpontot.
+    event.stopPropagation();
+
+    const box = event.currentTarget.getBoundingClientRect();
+    const nearTop = event.clientY - box.top < box.height * 0.4;
+
+    // Csoport közepére ejtve bele kerül, a felső sávra ejtve elé
+    drag.overKey = key.value;
+    drag.mode = isGroup.value && !nearTop ? 'into' : 'before';
+
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+};
+
+const onDragLeave = () => {
+    if (drag.overKey === key.value) {
+        drag.overKey = null;
+        drag.mode = null;
+    }
+};
+
+const onDrop = async (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const source = drag.node;
+    const mode = dropMode.value;
+    endDrag();
+
+    if (!source || !mode) return;
+
+    const targetParent = mode === 'into' ? props.node.id : props.parentId;
+    const position = mode === 'into' ? null : props.index;
+
+    await moveNode(source, targetParent, position);
+};
+
+const moveNode = async (source, targetParent, position) => {
+    const sameParent = (source.parentId ?? null) === (targetParent ?? null);
+
+    if (!sameParent) {
+        const count = affectedUrls(source);
+        const message = count
+            ? `Az áthelyezés ${count} webhook URL címét megváltoztatja (az útvonalban a csoportok neve szerepel).\n\nFolytatod?`
+            : 'Áthelyezed?';
+
+        if (!window.confirm(message)) return;
+    }
+
+    try {
+        const result = await api.move({
+            type: source.type,
+            id: source.id,
+            parent_id: targetParent,
+            position,
+        });
+
+        emit('changed');
+        emit(
+            'notify',
+            result.slug_changed
+                ? `Áthelyezve – a névütközés miatt az útvonal "${result.slug}" lett`
+                : 'Áthelyezve',
+            'success',
+        );
+    } catch (error) {
+        emit('notify', error.message, 'error');
+    }
+};
 
 const addSubgroup = async () => {
     const name = window.prompt(`Új alcsoport a(z) "${props.node.name}" alatt`);
@@ -74,8 +164,19 @@ const run = async (fn, message) => {
     <div>
         <div
             class="group relative flex items-center gap-1 rounded-lg px-1.5 py-1 text-sm"
-            :class="selected ? 'bg-blue-50 text-blue-900 dark:bg-blue-950 dark:text-blue-100' : 'text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800'"
+            :class="[
+                selected ? 'bg-blue-50 text-blue-900 dark:bg-blue-950 dark:text-blue-100' : 'text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800',
+                isDragged ? 'opacity-40' : '',
+                dropMode === 'into' ? 'ring-2 ring-blue-400' : '',
+                dropMode === 'before' ? 'border-t-2 border-blue-500' : '',
+            ]"
             :style="{ paddingLeft: `${depth * 12 + 6}px` }"
+            draggable="true"
+            @dragstart.stop="onDragStart"
+            @dragend="endDrag"
+            @dragover="onDragOver"
+            @dragleave="onDragLeave"
+            @drop="onDrop"
         >
             <button
                 v-if="isGroup"
@@ -154,22 +255,26 @@ const run = async (fn, message) => {
 
         <div v-if="isGroup && open">
             <TreeNode
-                v-for="child in node.children"
+                v-for="(child, childIndex) in node.children"
                 :key="`g-${child.id}`"
                 :node="child"
                 :depth="depth + 1"
                 :selection="selection"
+                :parent-id="node.id"
+                :index="childIndex"
                 @select="emit('select', $event)"
                 @changed="emit('changed')"
                 @notify="(m, k) => emit('notify', m, k)"
                 @open-settings="emit('open-settings', $event)"
             />
             <TreeNode
-                v-for="endpoint in node.endpoints"
+                v-for="(endpoint, endpointIndex) in node.endpoints"
                 :key="`e-${endpoint.id}`"
                 :node="endpoint"
                 :depth="depth + 1"
                 :selection="selection"
+                :parent-id="node.id"
+                :index="endpointIndex"
                 @select="emit('select', $event)"
                 @changed="emit('changed')"
                 @notify="(m, k) => emit('notify', m, k)"
