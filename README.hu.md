@@ -31,7 +31,7 @@ Amit az eredeti nyílt verzió nem tudott, és itt megvan:
 ## Kipróbálás
 
 ```bash
-git clone https://github.com/cactuska/webhook-hub.git
+git clone https://github.com/dposztos/webhook-hub.git
 cd webhook-hub
 cp .env.example .env
 # a kiírt kulcs az APP_KEY-be, plusz DB_PASSWORD, ADMIN_EMAIL, ADMIN_PASSWORD
@@ -43,7 +43,7 @@ A felület a <http://localhost:8080> címen jön fel. A belépés a `.env`-ben
 megadott `ADMIN_EMAIL` / `ADMIN_PASSWORD` párossal megy — nyilvános regisztráció
 nincs.
 
-Kész image-ek: `ghcr.io/cactuska/webhook-hub:latest` és
+Kész image-ek: `ghcr.io/dposztos/webhook-hub:latest` és
 `dposztos/webhook-hub:latest`.
 
 ## Az URL-ek felépítése

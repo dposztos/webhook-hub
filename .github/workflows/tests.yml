@@ -43,12 +43,21 @@ jobs:
           key: composer-${{ hashFiles('composer.lock') }}
           restore-keys: composer-
 
-      - run: composer install --prefer-dist --no-interaction --no-progress
-
+      # Prepared before composer install, because install runs Laravel's
+      # post-autoload-dump hook, which boots the application.
       - name: Prepare the environment
-        run: |
-          cp .env.example .env
-          php artisan key:generate
+        run: cp .env.example .env
+
+      - name: Install PHP dependencies
+        # Unauthenticated downloads from codeload.github.com get rate-limited
+        # (HTTP 429), which fails the install with exit code 100. The token
+        # raises the limit and is scoped to this run.
+        env:
+          COMPOSER_AUTH: '{"github-oauth":{"github.com":"${{ secrets.GITHUB_TOKEN }}"}}'
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Generate the application key
+        run: php artisan key:generate
 
       - name: Run tests
         env:

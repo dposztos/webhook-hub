@@ -49,9 +49,11 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
+          # metadata-action's own conditional: without it an unset secret
+          # leaves a blank line in this list and the build fails on it.
           images: |
             ghcr.io/${{ github.repository }}
-            ${{ secrets.DOCKERHUB_USERNAME && format('docker.io/{0}/webhook-hub', secrets.DOCKERHUB_USERNAME) || '' }}
+            name=docker.io/${{ env.DOCKERHUB_USERNAME }}/webhook-hub,enable=${{ env.DOCKERHUB_USERNAME != '' }}
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
             type=semver,pattern={{version}}

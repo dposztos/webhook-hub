@@ -1,6 +1,6 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "cactuska/webhook-hub",
+    "name": "dposztos/webhook-hub",
     "type": "project",
     "description": "Self-hosted webhook receiver with a group tree, permanent message history, a rule engine and e-mail actions.",
     "keywords": ["webhook", "webhook-tester", "self-hosted", "laravel", "vue"],

@@ -5,7 +5,7 @@
 # ${VARIABLE} below under "Environment variables" when you deploy the stack.
 services:
   app:
-    image: ghcr.io/cactuska/webhook-hub:latest
+    image: ghcr.io/dposztos/webhook-hub:latest
     container_name: webhook-hub
     restart: unless-stopped
     ports:

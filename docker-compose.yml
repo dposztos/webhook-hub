@@ -12,7 +12,7 @@ name: webhook-hub
 
 services:
   app:
-    image: ghcr.io/cactuska/webhook-hub:latest
+    image: ghcr.io/dposztos/webhook-hub:latest
     # build: .
     container_name: webhook-hub
     restart: unless-stopped

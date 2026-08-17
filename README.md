@@ -29,7 +29,7 @@ What the open-source original could not do, and this can:
 ## Try it
 
 ```bash
-git clone https://github.com/cactuska/webhook-hub.git
+git clone https://github.com/dposztos/webhook-hub.git
 cd webhook-hub
 cp .env.example .env
 # put the printed key into APP_KEY, and set DB_PASSWORD, ADMIN_EMAIL, ADMIN_PASSWORD
@@ -40,7 +40,7 @@ docker compose up -d
 The UI is then on <http://localhost:8080>. Sign in with the `ADMIN_EMAIL` /
 `ADMIN_PASSWORD` from your `.env` — there is no public sign-up.
 
-Prebuilt images: `ghcr.io/cactuska/webhook-hub:latest` and
+Prebuilt images: `ghcr.io/dposztos/webhook-hub:latest` and
 `dposztos/webhook-hub:latest`.
 
 ## How the URLs are built
