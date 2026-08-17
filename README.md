@@ -1,7 +1,8 @@
 # Webhook Hub
 
 Saját üzemeltetésű webhook-gyűjtő és -automatizáló. A [webhook.site](https://github.com/fredsted/webhook.site)
-MIT-licencű OSS változatából indult fork, de a v2 ág önálló alkalmazás: Laravel 12 + PostgreSQL + Vue 3.
+MIT-licencű OSS változatából indult fork, de mára önálló alkalmazás: Laravel 12 + PostgreSQL + Vue 3.
+A fork eredeti állapota az `upstream-master` ágon maradt meg.
 
 Amit az eredeti nyílt verzió nem tudott, és itt megvan:
 
