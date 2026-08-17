@@ -23,6 +23,22 @@ const copyUrl = async () => {
     emit('notify', 'URL a vágólapon', 'success');
 };
 
+const unreadCount = computed(() => props.selection?.unread_count ?? 0);
+
+const markAllRead = async () => {
+    try {
+        const result = await api.markAllRead(
+            props.selection.type === 'endpoint'
+                ? { endpoint_id: props.selection.id }
+                : { group_id: props.selection.id },
+        );
+        emit('notify', `${result.marked} üzenet olvasottnak jelölve`, 'success');
+        emit('changed');
+    } catch (error) {
+        emit('notify', error.message, 'error');
+    }
+};
+
 const clearMessages = async () => {
     if (!window.confirm(`Törlöd a(z) "${props.selection.name}" összes üzenetét?`)) return;
 
@@ -46,6 +62,9 @@ const clearMessages = async () => {
                 </h1>
 
                 <div class="ml-auto flex shrink-0 items-center gap-2 text-xs">
+                    <button v-if="unreadCount" class="btn-ghost text-blue-600 dark:text-blue-400" @click="markAllRead">
+                        {{ unreadCount }} olvasatlan – mind olvasott
+                    </button>
                     <button class="btn-ghost" @click="emit('rules')">Szabályok</button>
                     <button v-if="isEndpoint" class="btn-ghost" @click="emit('settings')">Beállítások</button>
                     <button v-if="isEndpoint" class="btn-ghost text-red-600 dark:text-red-400" @click="clearMessages">Ürítés</button>
@@ -81,6 +100,7 @@ const clearMessages = async () => {
                 @change="setFilter('only', $event.target.value)"
             >
                 <option value="">Mind</option>
+                <option value="unread">Csak olvasatlan</option>
                 <option value="matched">Csak illeszkedő</option>
                 <option value="failed">Hibás akció</option>
                 <option value="unprocessed">Feldolgozásra vár</option>
@@ -98,20 +118,38 @@ const clearMessages = async () => {
             <button
                 v-for="message in messages"
                 :key="message.uuid"
-                class="block w-full border-b border-slate-200 px-4 py-2.5 text-left hover:bg-white dark:border-slate-800 dark:hover:bg-slate-800"
-                :class="{ 'bg-white ring-1 ring-inset ring-blue-200 dark:bg-slate-800 dark:ring-blue-800': message.uuid === activeUuid }"
+                class="block w-full border-b border-l-2 border-slate-200 px-4 py-2.5 text-left hover:bg-white dark:border-slate-800 dark:hover:bg-slate-800"
+                :class="[
+                    message.uuid === activeUuid ? 'bg-white ring-1 ring-inset ring-blue-200 dark:bg-slate-800 dark:ring-blue-800' : '',
+                    message.read ? 'border-l-transparent' : 'border-l-blue-500 bg-blue-50/40 dark:bg-blue-950/20',
+                ]"
                 @click="emit('open', message.uuid)"
             >
                 <div class="flex items-center gap-2 text-xs">
                     <span class="rounded px-1.5 py-0.5 font-semibold" :class="methodColor(message.method)">
                         {{ message.method }}
                     </span>
-                    <span class="text-slate-500 dark:text-slate-400">{{ formatTime(message.created_at) }}</span>
+                    <span
+                        class="text-slate-500 dark:text-slate-400"
+                        :class="{ 'font-semibold text-slate-900 dark:text-slate-100': !message.read }"
+                    >
+                        {{ formatTime(message.created_at) }}
+                    </span>
+                    <span
+                        v-if="!message.read"
+                        class="h-1.5 w-1.5 shrink-0 rounded-full bg-blue-500"
+                        title="Olvasatlan"
+                    ></span>
                     <span v-if="!isEndpoint" class="truncate text-slate-400 dark:text-slate-500">· {{ message.endpoint.name }}</span>
                     <span class="ml-auto shrink-0 text-slate-400 dark:text-slate-500">{{ formatSize(message.size) }}</span>
                 </div>
 
-                <p class="mt-1 truncate font-mono text-xs text-slate-600 dark:text-slate-400">{{ message.preview || '—' }}</p>
+                <p
+                    class="mt-1 truncate font-mono text-xs text-slate-600 dark:text-slate-400"
+                    :class="{ 'text-slate-900 dark:text-slate-200': !message.read }"
+                >
+                    {{ message.preview || '—' }}
+                </p>
 
                 <div v-if="message.matched_rules?.length || message.actions_failed" class="mt-1 flex flex-wrap gap-1">
                     <span

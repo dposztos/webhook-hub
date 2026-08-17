@@ -21,7 +21,13 @@ class Message extends Model
         'truncated' => 'boolean',
         'created_at' => 'datetime',
         'processed_at' => 'datetime',
+        'read_at' => 'datetime',
     ];
+
+    public function scopeUnread($query)
+    {
+        return $query->whereNull('read_at');
+    }
 
     public function endpoint(): BelongsTo
     {

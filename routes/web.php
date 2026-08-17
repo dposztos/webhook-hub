@@ -34,6 +34,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/messages/{uuid}/raw', [MessageController::class, 'raw']);
         Route::get('/messages/{uuid}/variables', [TestController::class, 'variables']);
         Route::post('/messages/{uuid}/replay', [MessageController::class, 'replay']);
+        Route::post('/messages/{uuid}/unread', [MessageController::class, 'markUnread']);
+        Route::post('/messages/read-all', [MessageController::class, 'markAllRead']);
         Route::delete('/messages/{uuid}', [MessageController::class, 'destroy']);
 
         Route::get('/rules', [RuleController::class, 'index']);

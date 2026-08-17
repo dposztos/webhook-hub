@@ -71,6 +71,17 @@ const replay = async () => {
     }
 };
 
+const markUnread = async () => {
+    try {
+        await api.markUnread(props.detail.uuid);
+        emit('notify', 'Olvasatlanra állítva', 'success');
+        emit('close');
+        emit('changed');
+    } catch (error) {
+        emit('notify', error.message, 'error');
+    }
+};
+
 const remove = async () => {
     if (!window.confirm('Törlöd ezt az üzenetet?')) return;
 
@@ -117,6 +128,7 @@ const statusClass = (status) =>
 
             <div class="ml-auto flex shrink-0 items-center gap-1 text-xs">
                 <button class="btn-ghost" title="Szabályok újrafuttatása erre az üzenetre" @click="replay">Újrafuttat</button>
+                <button class="btn-ghost" title="Visszatétel az olvasatlanok közé" @click="markUnread">Olvasatlan</button>
                 <button class="btn-ghost text-red-600 dark:text-red-400" @click="remove">Törlés</button>
                 <button class="btn-ghost" @click="emit('close')">✕</button>
             </div>

@@ -204,10 +204,17 @@ const run = async (fn, message) => {
                         d="M6.5 9.5a2.5 2.5 0 0 0 3.54 0l2-2a2.5 2.5 0 1 0-3.54-3.54l-.7.7 1.06 1.07.7-.71a1 1 0 1 1 1.42 1.42l-2 2a1 1 0 0 1-1.42 0zm3 -3a2.5 2.5 0 0 0-3.54 0l-2 2A2.5 2.5 0 1 0 7.5 12l.7-.7-1.06-1.07-.7.71a1 1 0 1 1-1.42-1.42l2-2a1 1 0 0 1 1.42 0z"
                     />
                 </svg>
-                <span class="truncate" :class="{ 'font-medium': selected }">{{ node.name }}</span>
+                <span class="truncate" :class="{ 'font-medium': selected || node.unread_count }">{{ node.name }}</span>
 
                 <span
-                    v-if="!isGroup && node.messages_count"
+                    v-if="node.unread_count"
+                    class="ml-auto shrink-0 rounded-full bg-blue-600 px-1.5 text-[11px] font-semibold text-white"
+                    :title="`${node.unread_count} olvasatlan üzenet`"
+                >
+                    {{ node.unread_count }}
+                </span>
+                <span
+                    v-else-if="!isGroup && node.messages_count"
                     class="ml-auto shrink-0 rounded-full bg-slate-100 px-1.5 text-[11px] text-slate-500 dark:bg-slate-800 dark:text-slate-400"
                     :title="`Utolsó üzenet: ${relativeTime(node.last_message_at)}`"
                 >

@@ -67,6 +67,8 @@ export const api = {
     message: (uuid) => request('GET', `/api/messages/${uuid}`),
     deleteMessage: (uuid) => request('DELETE', `/api/messages/${uuid}`),
     replayMessage: (uuid) => request('POST', `/api/messages/${uuid}/replay`),
+    markUnread: (uuid) => request('POST', `/api/messages/${uuid}/unread`),
+    markAllRead: (params) => request('POST', '/api/messages/read-all', params),
     variables: (uuid) => request('GET', `/api/messages/${uuid}/variables`),
 
     rules: (params) => request('GET', `/api/rules${query(params)}`),

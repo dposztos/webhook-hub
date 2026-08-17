@@ -9,6 +9,9 @@ Amit az eredeti nyílt verzió nem tudott, és itt megvan:
   akárhány URL. Minden URL külön endpoint, saját beállításokkal.
 - **Minden üzenet megmarad**: nincs 500 kérés/URL korlát és nincs 7 napos lejárat. A megőrzés
   endpointonként korlátozható, ha valamit mégis takarítani kell.
+- **Olvasatlan jelölés**: az új üzenet olvasatlan (kék jelölés a listán, számláló a fában a
+  csoportokra összesítve is); a megnyitás olvasottnak jelöli, és van „mind olvasott" meg
+  „vissza olvasatlanra" is.
 - **Újraküldés bármivel**: minden üzenetnél ott a kész parancs curl, PowerShell, HTTPie, Python,
   JavaScript és nyers HTTP formában — az endpoint aktuális címére, a proxy-fejlécek nélkül.
 - **Szabályok és akciók**: a beérkezett JSON mezőire (fejlécekre, query-paraméterekre) épülő,

@@ -24,7 +24,7 @@ class MessageController extends Controller
             'group_id' => ['nullable', 'integer'],
             'q' => ['nullable', 'string', 'max:200'],
             'method' => ['nullable', 'string', 'max:10'],
-            'only' => ['nullable', 'in:matched,failed,unprocessed'],
+            'only' => ['nullable', 'in:matched,failed,unprocessed,unread'],
             'per_page' => ['nullable', 'integer', 'between:1,200'],
         ]);
 
@@ -55,6 +55,7 @@ class MessageController extends Controller
             'matched' => $query->whereRaw("jsonb_array_length(matched_rules) > 0"),
             'failed' => $query->where('actions_failed', '>', 0),
             'unprocessed' => $query->whereNull('processed_at'),
+            'unread' => $query->whereNull('read_at'),
             default => null,
         };
 
@@ -69,6 +70,7 @@ class MessageController extends Controller
                 'size' => $m->size,
                 'ip' => $m->ip,
                 'created_at' => $m->created_at?->toIso8601String(),
+                'read' => $m->read_at !== null,
                 'preview' => $m->preview(),
                 'matched_rules' => $m->matched_rules,
                 'actions_ok' => $m->actions_ok,
@@ -89,6 +91,11 @@ class MessageController extends Controller
         $message = Message::with(['endpoint.group', 'actionRuns.rule:id,name'])
             ->where('uuid', $uuid)
             ->firstOrFail();
+
+        // A megnyitás olvasottnak jelöli az üzenetet.
+        if (! $message->read_at) {
+            $message->forceFill(['read_at' => now()])->save();
+        }
 
         return response()->json([
             'uuid' => $message->uuid,
@@ -114,6 +121,7 @@ class MessageController extends Controller
             'response_status' => $message->response_status,
             'created_at' => $message->created_at?->toIso8601String(),
             'processed_at' => $message->processed_at?->toIso8601String(),
+            'read_at' => $message->read_at?->toIso8601String(),
             'matched_rules' => $message->matched_rules,
             'runs' => $message->actionRuns->map(fn ($run) => [
                 'id' => $run->id,
@@ -162,6 +170,39 @@ class MessageController extends Controller
         $endpoint->recountMessages();
 
         return response()->json(['deleted' => $deleted]);
+    }
+
+    /**
+     * Olvasatlanná tétel (hogy vissza lehessen tenni a „megnézendő” közé).
+     */
+    public function markUnread(string $uuid): JsonResponse
+    {
+        $message = Message::where('uuid', $uuid)->firstOrFail();
+        $message->forceFill(['read_at' => null])->save();
+
+        return response()->json(['read' => false]);
+    }
+
+    /**
+     * Egy endpoint (vagy egy egész csoport) összes üzenetének olvasottnak jelölése.
+     */
+    public function markAllRead(Request $request): JsonResponse
+    {
+        $request->validate([
+            'endpoint_id' => ['nullable', 'integer', 'exists:endpoints,id'],
+            'group_id' => ['nullable', 'integer', 'exists:groups,id'],
+        ]);
+
+        $query = Message::query()->whereNull('read_at');
+
+        if ($request->filled('endpoint_id')) {
+            $query->where('endpoint_id', (int) $request->input('endpoint_id'));
+        } elseif ($request->filled('group_id')) {
+            $group = Group::findOrFail((int) $request->input('group_id'));
+            $query->whereIn('endpoint_id', Endpoint::whereIn('group_id', $group->descendantIds())->pluck('id'));
+        }
+
+        return response()->json(['marked' => $query->update(['read_at' => now()])]);
     }
 
     /**

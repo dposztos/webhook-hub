@@ -32,27 +32,46 @@ class GroupController extends Controller
 
         $endpointsByGroup = $endpoints->groupBy(fn (Endpoint $e) => $e->group_id ?? 0);
 
-        $build = function (?int $parentId) use (&$build, $groups, $endpointsByGroup, $rulesByGroup, $rulesByEndpoint): array {
+        // Az olvasatlanok száma nem denormalizált érték: egy lekérdezésből jön.
+        $unread = DB::table('messages')
+            ->selectRaw('endpoint_id, count(*) as total')
+            ->whereNull('read_at')
+            ->groupBy('endpoint_id')
+            ->pluck('total', 'endpoint_id');
+
+        $build = function (?int $parentId) use (&$build, $groups, $endpointsByGroup, $rulesByGroup, $rulesByEndpoint, $unread): array {
             return $groups
                 ->where('parent_id', $parentId)
-                ->map(fn (Group $group) => [
-                    'id' => $group->id,
-                    'type' => 'group',
-                    'name' => $group->name,
-                    'slug' => $group->slug,
-                    'description' => $group->description,
-                    'color' => $group->color,
-                    'rules_count' => (int) ($rulesByGroup[$group->id] ?? 0),
-                    'children' => $build($group->id),
-                    'endpoints' => $this->endpointPayload($endpointsByGroup->get($group->id, collect()), $rulesByEndpoint),
-                ])
+                ->map(function (Group $group) use ($build, $endpointsByGroup, $rulesByGroup, $rulesByEndpoint, $unread) {
+                    $children = $build($group->id);
+                    $groupEndpoints = $this->endpointPayload(
+                        $endpointsByGroup->get($group->id, collect()),
+                        $rulesByEndpoint,
+                        $unread
+                    );
+
+                    return [
+                        'id' => $group->id,
+                        'type' => 'group',
+                        'name' => $group->name,
+                        'slug' => $group->slug,
+                        'description' => $group->description,
+                        'color' => $group->color,
+                        'rules_count' => (int) ($rulesByGroup[$group->id] ?? 0),
+                        'children' => $children,
+                        'endpoints' => $groupEndpoints,
+                        // A csoportnál az alatta lévő összes olvasatlan összege látszik.
+                        'unread_count' => collect($children)->sum('unread_count')
+                            + collect($groupEndpoints)->sum('unread_count'),
+                    ];
+                })
                 ->values()
                 ->all();
         };
 
         return response()->json([
             'groups' => $build(null),
-            'endpoints' => $this->endpointPayload($endpointsByGroup->get(0, collect()), $rulesByEndpoint),
+            'endpoints' => $this->endpointPayload($endpointsByGroup->get(0, collect()), $rulesByEndpoint, $unread),
         ]);
     }
 
@@ -105,9 +124,10 @@ class GroupController extends Controller
      * @param \Illuminate\Support\Collection<int|string, int> $rulesByEndpoint
      * @return array<int, array<string, mixed>>
      */
-    private function endpointPayload($endpoints, $rulesByEndpoint): array
+    private function endpointPayload($endpoints, $rulesByEndpoint, $unread = null): array
     {
         return $endpoints->map(fn (Endpoint $endpoint) => [
+            'unread_count' => (int) ($unread[$endpoint->id] ?? 0),
             'id' => $endpoint->id,
             'type' => 'endpoint',
             'uuid' => $endpoint->uuid,

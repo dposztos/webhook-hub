@@ -147,6 +147,14 @@ const selectNode = (node) => {
 const openMessage = async (uuid) => {
     activeUuid.value = uuid;
     detail.value = await guard(() => api.message(uuid));
+
+    // A megnyitás olvasottnak jelöli: a listán és a fa jelvényén azonnal látszódjon.
+    const row = messages.value.find((message) => message.uuid === uuid);
+
+    if (row && !row.read) {
+        row.read = true;
+        loadTree();
+    }
 };
 
 const refreshAll = async (silent = true) => {
