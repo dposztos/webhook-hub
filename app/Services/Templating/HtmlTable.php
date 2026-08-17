@@ -3,8 +3,8 @@
 namespace App\Services\Templating;
 
 /**
- * Tömb → egyszerű, levélbe illeszthető HTML-táblázat (inline stílusokkal,
- * mert a levelezőkliensek egy része kidobja a <style> blokkot).
+ * Array → a simple HTML table that survives e-mail (inline styles, because some
+ * mail clients strip the <style> block).
  */
 class HtmlTable
 {
@@ -35,7 +35,7 @@ class HtmlTable
         }
 
         if ($rows === '') {
-            return '<em>üres</em>';
+            return '<em>'.e(__('webhookhub.template.empty_table')).'</em>';
         }
 
         return '<table cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin:4px 0">'.$rows.'</table>';

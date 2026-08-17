@@ -13,11 +13,11 @@ return new class extends Migration
             $table->timestamp('read_at')->nullable();
         });
 
-        // A már meglévő üzeneteket olvasottnak vesszük, hogy a bevezetés ne
-        // dobjon vissza mindent olvasatlanként.
+        // Existing messages count as read, so rolling this out does not mark
+        // the entire history unread.
         DB::table('messages')->update(['read_at' => DB::raw('created_at')]);
 
-        // Az olvasatlanok számolása endpointonként gyakori művelet.
+        // Counting unread messages per endpoint is a frequent query.
         DB::statement('CREATE INDEX messages_unread_idx ON messages (endpoint_id) WHERE read_at IS NULL');
     }
 

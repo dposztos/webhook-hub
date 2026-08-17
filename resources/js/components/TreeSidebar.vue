@@ -3,6 +3,7 @@ import { ref } from 'vue';
 import { api } from '../api';
 import TreeNode from './TreeNode.vue';
 import { affectedUrls, drag, endDrag } from '../drag';
+import { t } from '../i18n';
 
 const props = defineProps({
     tree: { type: Object, required: true },
@@ -14,7 +15,7 @@ const emit = defineEmits(['select', 'changed', 'notify', 'open-settings']);
 
 const busy = ref(false);
 
-// A lista üres részére ejtve az elem a gyökérbe kerül
+// Dropping on the empty part of the list moves the node to the root
 const rootHover = ref(false);
 
 const onRootOver = (event) => {
@@ -33,26 +34,26 @@ const onRootDrop = async () => {
     if (!source || (source.parentId ?? null) === null) return;
 
     const count = affectedUrls(source);
-    if (!window.confirm(`Kiemeled a gyökérbe? Ez ${count} webhook URL címét megváltoztatja.`)) return;
+    if (!window.confirm(t('tree.confirmMoveToRoot', { count }))) return;
 
     try {
         await api.move({ type: source.type, id: source.id, parent_id: null, position: null });
         emit('changed');
-        emit('notify', 'Áthelyezve a gyökérbe', 'success');
+        emit('notify', t('tree.movedToRoot'), 'success');
     } catch (error) {
         emit('notify', error.message, 'error');
     }
 };
 
 const addRootGroup = async () => {
-    const name = window.prompt('Új főcsoport neve (pl. Ügyfelek)');
+    const name = window.prompt(t('tree.promptRootGroup'));
     if (!name) return;
 
     busy.value = true;
     try {
         await api.createGroup({ name, parent_id: null });
         emit('changed');
-        emit('notify', 'Csoport létrehozva', 'success');
+        emit('notify', t('tree.groupCreated'), 'success');
     } catch (error) {
         emit('notify', error.message, 'error');
     } finally {
@@ -61,13 +62,13 @@ const addRootGroup = async () => {
 };
 
 const addRootEndpoint = async () => {
-    const name = window.prompt('Új URL neve (csoport nélkül)');
+    const name = window.prompt(t('tree.promptRootEndpoint'));
     if (!name) return;
 
     try {
         await api.createEndpoint({ name, group_id: null });
         emit('changed');
-        emit('notify', 'URL létrehozva', 'success');
+        emit('notify', t('tree.endpointCreated'), 'success');
     } catch (error) {
         emit('notify', error.message, 'error');
     }
@@ -80,11 +81,11 @@ const addRootEndpoint = async () => {
         :style="{ width: `${width}px` }"
     >
         <div class="flex items-center justify-between px-3 py-2.5">
-            <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">Csoportok és URL-ek</h2>
+            <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">{{ $t('tree.heading') }}</h2>
             <div class="flex gap-1">
                 <button
                     class="rounded px-1.5 py-0.5 text-lg leading-none text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-                    title="Új főcsoport"
+                    :title="$t('tree.newRootGroup')"
                     :disabled="busy"
                     @click="addRootGroup"
                 >
@@ -115,7 +116,7 @@ const addRootEndpoint = async () => {
             />
 
             <template v-if="tree.endpoints?.length">
-                <p class="mt-3 px-2 text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">Csoport nélkül</p>
+                <p class="mt-3 px-2 text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">{{ $t('tree.ungrouped') }}</p>
                 <TreeNode
                     v-for="(endpoint, endpointIndex) in tree.endpoints"
                     :key="`e-${endpoint.id}`"
@@ -132,7 +133,7 @@ const addRootEndpoint = async () => {
             </template>
 
             <p v-if="!tree.groups?.length && !tree.endpoints?.length" class="px-3 py-6 text-center text-sm text-slate-400 dark:text-slate-500">
-                Még nincs semmi.<br />Hozz létre egy csoportot a + gombbal.
+                {{ $t('tree.emptyTitle') }}<br />{{ $t('tree.emptyHint') }}
             </p>
         </div>
 
@@ -140,7 +141,7 @@ const addRootEndpoint = async () => {
             class="border-t border-slate-200 px-3 py-2 text-left text-xs text-slate-500 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800"
             @click="addRootEndpoint"
         >
-            + URL csoport nélkül
+            {{ $t('tree.addUngroupedEndpoint') }}
         </button>
     </aside>
 </template>

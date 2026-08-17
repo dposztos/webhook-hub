@@ -19,8 +19,8 @@ class IngestController extends Controller
     {
         $resolved = $this->resolver->resolve($path);
 
-        // Ismeretlen vagy kikapcsolt endpoint: egységes 404, hogy ne lehessen
-        // létező URL-eket kitalálgatni a válaszokból.
+        // Unknown or disabled endpoint: always the same 404, so existing URLs
+        // cannot be discovered by probing the responses.
         if (! $resolved || ! $resolved->endpoint->enabled) {
             return new Response('Not found', 404, ['Content-Type' => 'text/plain']);
         }

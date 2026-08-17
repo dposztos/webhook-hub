@@ -1,8 +1,8 @@
 import { reactive } from 'vue';
 
 /**
- * A fában húzott elem közös állapota (a TreeNode példányok ezen osztoznak).
- * mode: 'into' = a cél csoportba, 'before' = a cél elé, azonos szinten.
+ * Shared state for the node being dragged (every TreeNode instance reads it).
+ * mode: 'into' = into the target group, 'before' = above the target, same level.
  */
 export const drag = reactive({
     node: null,
@@ -25,7 +25,7 @@ export function endDrag() {
     drag.mode = null;
 }
 
-/** Saját magába vagy a saját részfájába nem lehet ejteni. */
+/** A node cannot be dropped into itself or into its own subtree. */
 export function isInsideDragged(targetType, targetId) {
     const source = drag.node;
     if (!source) return false;
@@ -41,7 +41,7 @@ export function isInsideDragged(targetType, targetId) {
     return (source.children ?? []).some(walk) || (source.endpoints ?? []).some((e) => e.type === targetType && e.id === targetId);
 }
 
-/** Hány webhook URL címe változik meg az áthelyezéssel. */
+/** How many webhook URLs change address as a result of the move. */
 export function affectedUrls(node) {
     if (!node) return 0;
     if (node.type === 'endpoint') return 1;

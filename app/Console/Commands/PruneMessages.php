@@ -8,9 +8,16 @@ use Illuminate\Console\Command;
 
 class PruneMessages extends Command
 {
-    protected $signature = 'webhook:prune {--dry-run : Csak számol, nem töröl}';
+    protected $signature = 'webhook:prune {--dry-run : Only count, do not delete}';
 
-    protected $description = 'Endpointonként beállított megőrzési szabályok érvényesítése (alapból: örökre megőrzünk mindent)';
+    public function __construct()
+    {
+        // Set before parent::__construct(), which is what copies the value onto
+        // the underlying Symfony command.
+        $this->description = __('webhookhub.console.prune_description');
+
+        parent::__construct();
+    }
 
     public function handle(): int
     {
@@ -50,9 +57,10 @@ class PruneMessages extends Command
             }
         });
 
-        $this->info($dryRun
-            ? "Törlésre jelölve: {$deleted} üzenet (próbafuttatás)"
-            : "Törölve: {$deleted} üzenet");
+        $this->info(__(
+            $dryRun ? 'webhookhub.console.prune_marked' : 'webhookhub.console.prune_deleted',
+            ['count' => $deleted]
+        ));
 
         return self::SUCCESS;
     }

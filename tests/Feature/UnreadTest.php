@@ -19,16 +19,16 @@ class UnreadTest extends TestCase
     {
         parent::setUp();
 
-        $group = Group::create(['name' => 'Ügyfelek', 'slug' => 'ugyfelek']);
+        $group = Group::create(['name' => 'Customers', 'slug' => 'customers']);
         $this->endpoint = Endpoint::create(['name' => 'Hook', 'slug' => 'hook', 'group_id' => $group->id]);
     }
 
     private function send(array $payload = ['a' => 1]): void
     {
-        $this->postJson("/u/ugyfelek/hook/{$this->endpoint->secret}", $payload);
+        $this->postJson("/u/customers/hook/{$this->endpoint->secret}", $payload);
     }
 
-    public function test_a_beerkezo_uzenet_olvasatlan(): void
+    public function test_an_incoming_message_starts_unread(): void
     {
         $this->send();
 
@@ -40,7 +40,7 @@ class UnreadTest extends TestCase
             ->assertJsonPath('data.0.read', false);
     }
 
-    public function test_a_megnyitas_olvasottnak_jeloli(): void
+    public function test_opening_a_message_marks_it_read(): void
     {
         $this->send();
         $uuid = Message::firstOrFail()->uuid;
@@ -52,7 +52,7 @@ class UnreadTest extends TestCase
         $this->assertNotNull(Message::firstOrFail()->read_at);
     }
 
-    public function test_visszatehető_olvasatlanra(): void
+    public function test_message_can_be_marked_unread_again(): void
     {
         $this->send();
         $uuid = Message::firstOrFail()->uuid;
@@ -64,7 +64,7 @@ class UnreadTest extends TestCase
         $this->assertNull(Message::firstOrFail()->read_at);
     }
 
-    public function test_a_fa_az_olvasatlanokat_szamolja_a_csoportra_is(): void
+    public function test_the_tree_sums_unread_counts_onto_the_group(): void
     {
         $this->send();
         $this->send();
@@ -75,7 +75,7 @@ class UnreadTest extends TestCase
         $tree->assertJsonPath('groups.0.endpoints.0.unread_count', 2);
     }
 
-    public function test_mind_olvasottnak_jelolese_endpointra(): void
+    public function test_mark_all_read_for_an_endpoint(): void
     {
         $this->send();
         $this->send();
@@ -88,7 +88,7 @@ class UnreadTest extends TestCase
         $this->assertSame(0, Message::unread()->count());
     }
 
-    public function test_szures_csak_az_olvasatlanokra(): void
+    public function test_filtering_to_unread_only(): void
     {
         $this->send(['elso' => true]);
         $first = Message::firstOrFail();

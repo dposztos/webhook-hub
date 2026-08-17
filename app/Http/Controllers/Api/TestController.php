@@ -13,8 +13,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 /**
- * A szerkesztő "kipróbálás" gombjai mögötti végpontok: feltétel-teszt valódi
- * üzeneten, sablon-előnézet, és teszt-levél küldése.
+ * The endpoints behind the editor's "try it" buttons: testing conditions against
+ * a real message, previewing a template, and sending a test e-mail.
  */
 class TestController extends Controller
 {
@@ -48,8 +48,8 @@ class TestController extends Controller
     }
 
     /**
-     * Akció próbafuttatása: alapból csak kirendereli (nem küld levelet).
-     * A `send_to` megadásával valódi teszt-levél megy ki az adott címre.
+     * Dry-run an action: by default it only renders, without sending mail.
+     * Passing `send_to` sends a real test e-mail to that address.
      */
     public function action(Request $request): JsonResponse
     {
@@ -92,7 +92,7 @@ class TestController extends Controller
     }
 
     /**
-     * A sablonokban/feltételekben elérhető változók egy konkrét üzenetre.
+     * The variables available to templates and conditions for a given message.
      */
     public function context(string $uuid): array
     {
@@ -112,8 +112,8 @@ class TestController extends Controller
     }
 
     /**
-     * Kattintható változó-javaslatok a beérkezett üzenet alapján:
-     * "json.order.items.0.sku" alakú, kész hivatkozások.
+     * Clickable variable suggestions derived from the captured message:
+     * ready-made references shaped like "json.order.items.0.sku".
      *
      * @param array<string, mixed> $context
      * @return array<int, array<string, mixed>>

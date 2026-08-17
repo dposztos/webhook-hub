@@ -19,7 +19,7 @@ class ActionRegistry
         $class = self::TYPES[$type] ?? null;
 
         if (! $class) {
-            throw new InvalidArgumentException("Ismeretlen akció-típus: {$type}");
+            throw new InvalidArgumentException(__('webhookhub.actions.unknown_type', ['type' => $type]));
         }
 
         return $this->container->make($class);

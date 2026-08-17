@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="hu">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Webhook Hub</title>
 
-    {{-- A téma még a stíluslap előtt eldől, hogy ne villanjon fel a világos háttér. --}}
+    {{-- Decide the theme before the stylesheet loads, so the light background never flashes. --}}
     <script>
         (function () {
             try {

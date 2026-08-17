@@ -1,5 +1,6 @@
 <script setup>
 import { computed, ref } from 'vue';
+import { t } from '../i18n';
 
 const props = defineProps({
     value: { required: true },
@@ -21,7 +22,9 @@ const isLeaf = computed(() => kind.value !== 'object' && kind.value !== 'array')
 const entries = computed(() => (isLeaf.value ? [] : Object.entries(props.value)));
 
 const summary = computed(() =>
-    kind.value === 'array' ? `[${entries.value.length} elem]` : `{${entries.value.length} mező}`,
+    kind.value === 'array'
+        ? `[${t('json.items', { count: entries.value.length })}]`
+        : `{${t('json.fields', { count: entries.value.length })}}`,
 );
 
 const leafClass = computed(

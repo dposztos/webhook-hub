@@ -6,9 +6,9 @@ use App\Models\Endpoint;
 use App\Models\Group;
 
 /**
- * A beérkező URL útvonalát bontja fel: csoport-lánc / endpoint / titok / maradék.
+ * Splits the incoming URL path into group chain / endpoint / secret / remainder.
  *
- * Példa: "ugyfelek/abc123/rendelesek/k7f3q9x2mnpq/extra/utvonal"
+ * Example: "customers/acme/orders/k7f3q9x2mnpq/extra/path"
  *   → endpoint = "rendelesek" az "ugyfelek/abc123" csoportban, suffix = "extra/utvonal"
  */
 class EndpointResolver
@@ -29,7 +29,7 @@ class EndpointResolver
             $segment = $segments[$index];
             $next = $segments[$index + 1] ?? null;
 
-            // Endpoint akkor nyer, ha a rákövetkező szegmens a hozzá tartozó titok.
+            // An endpoint only matches when the next segment is its own secret.
             $endpoint = Endpoint::query()
                 ->where('group_id', $groupId)
                 ->where('slug', $segment)

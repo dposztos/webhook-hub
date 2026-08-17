@@ -2,6 +2,6 @@
 
 use Illuminate\Support\Facades\Schedule;
 
-// Megőrzési szabályok érvényesítése. Alapból nincs mit tenni:
-// az endpointok addig őriznek mindent, amíg nem állítasz be korlátot.
+// Enforce retention rules. By default there is nothing to do: endpoints keep
+// everything until you set a limit.
 Schedule::command('webhook:prune')->dailyAt('03:30');

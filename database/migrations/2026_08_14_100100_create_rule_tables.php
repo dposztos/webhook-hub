@@ -15,8 +15,8 @@ return new class extends Migration
             $table->boolean('enabled')->default(true);
             $table->integer('priority')->default(100);
 
-            // Pontosan az egyik van kitöltve: a csoportra kötött szabály
-            // öröklődik az alatta lévő összes endpointra.
+            // Exactly one of these is set: a rule attached to a group is
+            // inherited by every endpoint below it.
             $table->foreignId('group_id')->nullable()->constrained('groups')->cascadeOnDelete();
             $table->foreignId('endpoint_id')->nullable()->constrained('endpoints')->cascadeOnDelete();
 

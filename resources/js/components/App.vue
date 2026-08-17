@@ -9,9 +9,11 @@ import EndpointSettings from './EndpointSettings.vue';
 import GroupSettings from './GroupSettings.vue';
 import ToastStack from './ToastStack.vue';
 import ResizeHandle from './ResizeHandle.vue';
-import { MODES, MODE_LABELS, applyMode, storedMode, watchSystem } from '../theme';
+import LanguageSwitcher from './LanguageSwitcher.vue';
+import { MODES, applyMode, storedMode, watchSystem } from '../theme';
+import { t } from '../i18n';
 
-// Panel-szélességek: egérrel húzhatók, és megjegyezzük őket.
+// Panel widths: draggable, and remembered between visits.
 const WIDTH_KEY = 'webhookhub-panels';
 const savedWidths = (() => {
     try {
@@ -59,7 +61,7 @@ const guard = async (fn, successMessage) => {
         if (successMessage) notify(successMessage, 'success');
         return result;
     } catch (error) {
-        notify(error.message ?? 'Ismeretlen hiba', 'error');
+        notify(error.message ?? t('common.unknownError'), 'error');
         throw error;
     }
 };
@@ -82,7 +84,7 @@ const firstEndpoint = (node) => {
     return null;
 };
 
-// A kijelölt elem friss adatai a fából (URL, számlálók) – a fa 5 másodpercenként frissül.
+// Fresh data for the selected node (URL, counters) — the tree refreshes every 5 seconds.
 const selectedNode = computed(() => {
     if (!selection.value) return null;
 
@@ -137,7 +139,7 @@ const selectNode = (node) => {
     panel.value = null;
 
     if (filters.value.page !== 1) {
-        filters.value.page = 1; // a figyelő tölti újra
+        filters.value.page = 1; // the watcher reloads
         return;
     }
 
@@ -148,7 +150,7 @@ const openMessage = async (uuid) => {
     activeUuid.value = uuid;
     detail.value = await guard(() => api.message(uuid));
 
-    // A megnyitás olvasottnak jelöli: a listán és a fa jelvényén azonnal látszódjon.
+    // Opening marks it read; reflect that on the list and the tree badge at once.
     const row = messages.value.find((message) => message.uuid === uuid);
 
     if (row && !row.read) {
@@ -161,7 +163,7 @@ const refreshAll = async (silent = true) => {
     await Promise.all([loadTree(), loadMessages(silent)]);
 };
 
-// Szűrő változásakor vissza az első oldalra; lapozáskor csak újratöltünk.
+// A filter change jumps back to page one; paging just reloads.
 watch(
     () => [filters.value.q, filters.value.method, filters.value.only],
     () => {
@@ -184,7 +186,7 @@ onMounted(async () => {
 
 onUnmounted(() => clearInterval(timer));
 
-// Téma: rendszer → világos → sötét körben
+// Theme cycles: system → light → dark
 const themeMode = ref(storedMode());
 
 const nextTheme = () => {
@@ -215,34 +217,36 @@ const logout = () => {
             <div class="ml-auto flex items-center gap-3 text-sm">
                 <label class="flex cursor-pointer items-center gap-1.5 text-slate-600 dark:text-slate-400">
                     <input v-model="autoRefresh" type="checkbox" class="rounded border-slate-300 dark:border-slate-700" />
-                    Élő frissítés
+                    {{ $t('app.liveRefresh') }}
                 </label>
-                <button class="text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200" @click="refreshAll(false)">Frissítés</button>
+                <button class="text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200" @click="refreshAll(false)">{{ $t('app.refresh') }}</button>
+
+                <LanguageSwitcher />
 
                 <button
                     class="rounded px-1.5 py-1 text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-                    :title="`Téma: ${MODE_LABELS[themeMode]} (kattints a váltáshoz)`"
+                    :title="$t('app.themeToggle', { mode: $t(`theme.${themeMode}`) })"
                     @click="nextTheme"
                 >
                     <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                        <!-- rendszer: monitor -->
+                        <!-- system: monitor -->
                         <path
                             v-if="themeMode === 'system'"
                             d="M3 4a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-4.5l.5 2h1.5a.5.5 0 0 1 0 1h-7a.5.5 0 0 1 0-1H8l.5-2H4a1 1 0 0 1-1-1zm1.5.5v7h11v-7z"
                         />
-                        <!-- világos: nap -->
+                        <!-- light: sun -->
                         <path
                             v-else-if="themeMode === 'light'"
                             d="M10 4a.75.75 0 0 1-.75-.75V2a.75.75 0 0 1 1.5 0v1.25A.75.75 0 0 1 10 4m0 12a.75.75 0 0 1 .75.75V18a.75.75 0 0 1-1.5 0v-1.25A.75.75 0 0 1 10 16m6-6a.75.75 0 0 1 .75-.75H18a.75.75 0 0 1 0 1.5h-1.25A.75.75 0 0 1 16 10m-12 0a.75.75 0 0 1-.75.75H2a.75.75 0 0 1 0-1.5h1.25A.75.75 0 0 1 4 10m10.24-4.24a.75.75 0 0 1 0-1.06l.88-.89a.75.75 0 1 1 1.07 1.07l-.89.88a.75.75 0 0 1-1.06 0m-9.55 9.55a.75.75 0 0 1 0-1.06l.89-.89a.75.75 0 0 1 1.06 1.07l-.88.88a.75.75 0 0 1-1.07 0m10.61 0a.75.75 0 0 1-1.06 0l-.89-.88a.75.75 0 0 1 1.06-1.07l.89.89a.75.75 0 0 1 0 1.06M5.76 5.76a.75.75 0 0 1-1.07 0l-.88-.88A.75.75 0 0 1 4.88 3.8l.88.89a.75.75 0 0 1 0 1.06M10 6.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7"
                         />
-                        <!-- sötét: hold -->
+                        <!-- dark: moon -->
                         <path
                             v-else
                             d="M9.3 2.1a.75.75 0 0 1 .2.85 6 6 0 0 0 7.55 7.55.75.75 0 0 1 .95.95A7.5 7.5 0 1 1 8.45 1.9a.75.75 0 0 1 .85.2"
                         />
                     </svg>
                 </button>
-                <button class="text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200" @click="logout">Kilépés</button>
+                <button class="text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200" @click="logout">{{ $t('app.logout') }}</button>
             </div>
         </header>
 

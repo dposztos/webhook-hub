@@ -99,7 +99,7 @@ class RuleController extends Controller
 
         if (! empty($data['group_id']) && ! empty($data['endpoint_id'])) {
             throw ValidationException::withMessages([
-                'endpoint_id' => 'Egy szabály vagy csoporthoz, vagy endpointhoz tartozik – nem mindkettőhöz.',
+                'endpoint_id' => __('webhookhub.validation.rule_scope'),
             ]);
         }
 

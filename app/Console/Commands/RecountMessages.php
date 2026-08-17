@@ -9,7 +9,14 @@ class RecountMessages extends Command
 {
     protected $signature = 'webhook:recount';
 
-    protected $description = 'Az endpointok üzenetszámlálóinak újraszámolása a tárolt üzenetekből';
+    public function __construct()
+    {
+        // Set before parent::__construct(), which is what copies the value onto
+        // the underlying Symfony command.
+        $this->description = __('webhookhub.console.recount_description');
+
+        parent::__construct();
+    }
 
     public function handle(): int
     {
@@ -27,7 +34,9 @@ class RecountMessages extends Command
             }
         });
 
-        $this->info($fixed ? "Javítva: {$fixed} endpoint számlálója" : 'Minden számláló pontos volt.');
+        $this->info($fixed
+            ? __('webhookhub.console.recount_fixed', ['count' => $fixed])
+            : __('webhookhub.console.recount_ok'));
 
         return self::SUCCESS;
     }

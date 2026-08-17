@@ -4,6 +4,7 @@ import { api } from '../api';
 import ModalShell from './ModalShell.vue';
 import ConditionNode from './ConditionNode.vue';
 import EmailActionEditor from './EmailActionEditor.vue';
+import { t } from '../i18n';
 
 const props = defineProps({
     rule: { type: Object, required: true },
@@ -25,7 +26,7 @@ const testResult = ref(null);
 const addEmailAction = () => {
     form.value.actions.push({
         type: 'email',
-        name: 'E-mail',
+        name: t('rules.emailAction'),
         enabled: true,
         config: { to: '', cc: '', subject: '', body_html: '', inline_css: true },
     });
@@ -33,7 +34,7 @@ const addEmailAction = () => {
 
 const testConditions = async () => {
     if (!props.sampleMessage) {
-        emit('notify', 'A próbához kell egy már beérkezett üzenet.', 'error');
+        emit('notify', t('rules.testNeedsMessage'), 'error');
         return;
     }
 
@@ -49,7 +50,7 @@ const testConditions = async () => {
 
 const save = async () => {
     if (!form.value.name?.trim()) {
-        emit('notify', 'Adj nevet a szabálynak.', 'error');
+        emit('notify', t('rules.nameRequired'), 'error');
         return;
     }
 
@@ -69,7 +70,7 @@ const save = async () => {
 
     try {
         form.value.id ? await api.updateRule(form.value.id, payload) : await api.createRule(payload);
-        emit('notify', 'Szabály mentve', 'success');
+        emit('notify', t('rules.saved'), 'success');
         emit('saved');
     } catch (error) {
         emit('notify', error.message, 'error');
@@ -81,7 +82,7 @@ const save = async () => {
 
 <template>
     <ModalShell
-        :title="form.id ? 'Szabály szerkesztése' : 'Új szabály'"
+        :title="form.id ? $t('rules.editTitle') : $t('rules.newTitle')"
         :subtitle="scopeLabel"
         wide
         @close="emit('close')"
@@ -89,30 +90,30 @@ const save = async () => {
         <div class="space-y-5">
             <div class="grid grid-cols-4 gap-3">
                 <div class="col-span-2">
-                    <label class="lbl">Név</label>
-                    <input v-model="form.name" class="inp" placeholder="pl. Nagy értékű rendelés – értesítés" />
+                    <label class="lbl">{{ $t('common.name') }}</label>
+                    <input v-model="form.name" class="inp" :placeholder="$t('rules.namePlaceholder')" />
                 </div>
                 <div>
-                    <label class="lbl">Prioritás (kisebb = előbb)</label>
+                    <label class="lbl">{{ $t('rules.priority') }}</label>
                     <input v-model="form.priority" type="number" class="inp" />
                 </div>
                 <div class="flex items-end gap-3 pb-1.5">
                     <label class="flex items-center gap-1.5 text-sm text-slate-700 dark:text-slate-300">
                         <input v-model="form.enabled" type="checkbox" class="rounded border-slate-300 dark:border-slate-700" />
-                        aktív
+                        {{ $t('rules.active') }}
                     </label>
-                    <label class="flex items-center gap-1.5 text-sm text-slate-700 dark:text-slate-300" title="Ha illeszkedik, a további szabályok már nem futnak le">
+                    <label class="flex items-center gap-1.5 text-sm text-slate-700 dark:text-slate-300" :title="$t('rules.stopHereTitle')">
                         <input v-model="form.stop_processing" type="checkbox" class="rounded border-slate-300 dark:border-slate-700" />
-                        itt álljon meg
+                        {{ $t('rules.stopHere') }}
                     </label>
                 </div>
             </div>
 
             <section>
                 <div class="mb-2 flex items-center gap-2">
-                    <h3 class="text-sm font-semibold text-slate-800 dark:text-slate-200">Mikor fusson le?</h3>
+                    <h3 class="text-sm font-semibold text-slate-800 dark:text-slate-200">{{ $t('rules.whenHeading') }}</h3>
                     <button class="ml-auto btn-secondary text-xs" @click="testConditions">
-                        Kipróbálás a legutóbbi üzeneten
+                        {{ $t('rules.testButton') }}
                     </button>
                 </div>
 
@@ -128,7 +129,7 @@ const save = async () => {
                     :class="testResult.matched ? 'bg-emerald-50 text-emerald-800 ring-emerald-100 dark:bg-emerald-950/50 dark:text-emerald-200 dark:ring-emerald-900' : 'bg-slate-50 text-slate-600 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700'"
                 >
                     <p class="font-medium">
-                        {{ testResult.matched ? '✓ A szabály illeszkedik erre az üzenetre' : '✕ Nem illeszkedik' }}
+                        {{ testResult.matched ? $t('rules.testMatched') : $t('rules.testNotMatched') }}
                     </p>
                     <ul class="mt-1 space-y-0.5 font-mono">
                         <li v-for="(line, index) in testResult.trace" :key="index">{{ line }}</li>
@@ -138,12 +139,12 @@ const save = async () => {
 
             <section>
                 <div class="mb-2 flex items-center gap-2">
-                    <h3 class="text-sm font-semibold text-slate-800 dark:text-slate-200">Mi történjen?</h3>
-                    <button class="ml-auto btn-secondary text-xs" @click="addEmailAction">+ E-mail akció</button>
+                    <h3 class="text-sm font-semibold text-slate-800 dark:text-slate-200">{{ $t('rules.thenHeading') }}</h3>
+                    <button class="ml-auto btn-secondary text-xs" @click="addEmailAction">{{ $t('rules.addEmailAction') }}</button>
                 </div>
 
                 <p v-if="!form.actions.length" class="rounded-lg border border-dashed border-slate-300 py-6 text-center text-sm text-slate-400 dark:border-slate-700 dark:text-slate-500">
-                    Még nincs akció.
+                    {{ $t('rules.noActions') }}
                 </p>
 
                 <div class="space-y-3">
@@ -161,8 +162,8 @@ const save = async () => {
         </div>
 
         <template #footer>
-            <button class="btn-primary" :disabled="saving" @click="save">Mentés</button>
-            <button class="btn-secondary" @click="emit('close')">Mégse</button>
+            <button class="btn-primary" :disabled="saving" @click="save">{{ $t('common.save') }}</button>
+            <button class="btn-secondary" @click="emit('close')">{{ $t('common.cancel') }}</button>
         </template>
     </ModalShell>
 </template>

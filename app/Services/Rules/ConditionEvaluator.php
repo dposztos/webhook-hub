@@ -3,12 +3,12 @@
 namespace App\Services\Rules;
 
 /**
- * Feltétel-fa kiértékelése.
+ * Evaluates the condition tree.
  *
- * Csoport-csomópont:  {"type":"group","op":"and|or","not":false,"children":[...]}
- * Feltétel-csomópont: {"type":"cond","source":"json","path":"a.b","operator":"equals","value":"x","ci":false}
+ * Group node:      {"type":"group","op":"and|or","not":false,"children":[...]}
+ * Condition node:  {"type":"cond","source":"json","path":"a.b","operator":"equals","value":"x","ci":false}
  *
- * Üres and-csoport igazra értékelődik: a feltétel nélküli szabály minden üzenetre lefut.
+ * An empty and-group evaluates to true: a rule without conditions runs for every message.
  */
 class ConditionEvaluator
 {
@@ -24,7 +24,7 @@ class ConditionEvaluator
         'is_true', 'is_false',
     ];
 
-    /** @var array<int, string> A kiértékelés magyarázata (hibakereséshez / teszthez). */
+    /** @var array<int, string> Explanation of the evaluation, for debugging and tests. */
     private array $trace = [];
 
     public function __construct(private readonly ValueResolver $resolver = new ValueResolver) {}
@@ -174,7 +174,7 @@ class ConditionEvaluator
     private function equals(mixed $actual, mixed $expected, bool $ci): bool
     {
         if (is_array($actual)) {
-            // Tömb esetén az "egyenlő" azt jelenti: tartalmazza az értéket.
+            // For an array, "equals" means "contains this value".
             return $this->inList($expected, $actual, $ci);
         }
 
@@ -256,7 +256,7 @@ class ConditionEvaluator
     }
 
     /**
-     * Számként vagy időpontként is összehasonlítható érték.
+     * A value comparable either as a number or as a point in time.
      */
     private function numeric(mixed $value): ?float
     {
@@ -274,7 +274,7 @@ class ConditionEvaluator
             return null;
         }
 
-        // "1 234,56" / "1,234.56" alakú számok
+        // Numbers written as "1 234,56" or "1,234.56"
         $normalized = str_replace([' ', ' '], '', $string);
         if (preg_match('/^-?\d{1,3}(\.\d{3})*(,\d+)?$/', $normalized)) {
             $normalized = str_replace(['.', ','], ['', '.'], $normalized);

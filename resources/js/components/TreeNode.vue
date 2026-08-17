@@ -3,6 +3,7 @@ import { computed, ref } from 'vue';
 import { api } from '../api';
 import { copyText, relativeTime } from '../format';
 import { affectedUrls, drag, dragKey, endDrag, isInsideDragged, startDrag } from '../drag';
+import { t } from '../i18n';
 
 const props = defineProps({
     node: { type: Object, required: true },
@@ -25,7 +26,7 @@ const selected = computed(
 const select = () =>
     emit('select', { type: props.node.type, id: props.node.id, name: props.node.name, url: props.node.url });
 
-// --- Húzd és ejtsd: átszervezés a fában ---
+// --- Drag and drop: rearranging the tree ---
 const key = computed(() => dragKey(props.node));
 const isDragged = computed(() => drag.node && dragKey(drag.node) === key.value);
 const dropMode = computed(() => (drag.overKey === key.value ? drag.mode : null));
@@ -33,7 +34,7 @@ const dropMode = computed(() => (drag.overKey === key.value ? drag.mode : null))
 const onDragStart = (event) => {
     startDrag({ ...props.node, parentId: props.parentId }, props.parentId);
     event.dataTransfer.effectAllowed = 'move';
-    // A böngésző csak akkor indít húzást, ha van adat a vágólapon
+    // Browsers only start a drag when the transfer carries some data
     event.dataTransfer.setData('text/plain', props.node.name);
 };
 
@@ -41,14 +42,14 @@ const onDragOver = (event) => {
     if (!drag.node || isDragged.value) return;
     if (isInsideDragged(props.node.type, props.node.id)) return;
 
-    // A sor „elnyeli” az eseményt, különben a mögötte lévő gyökér-ejtőzóna
-    // (TreeSidebar) törölné a most beállított célpontot.
+    // The row swallows the event; otherwise the root drop zone behind it
+    // (TreeSidebar) would clear the target we just set.
     event.stopPropagation();
 
     const box = event.currentTarget.getBoundingClientRect();
     const nearTop = event.clientY - box.top < box.height * 0.4;
 
-    // Csoport közepére ejtve bele kerül, a felső sávra ejtve elé
+    // Dropped on the middle of a group it goes inside, on the top strip before it
     drag.overKey = key.value;
     drag.mode = isGroup.value && !nearTop ? 'into' : 'before';
 
@@ -84,9 +85,7 @@ const moveNode = async (source, targetParent, position) => {
 
     if (!sameParent) {
         const count = affectedUrls(source);
-        const message = count
-            ? `Az áthelyezés ${count} webhook URL címét megváltoztatja (az útvonalban a csoportok neve szerepel).\n\nFolytatod?`
-            : 'Áthelyezed?';
+        const message = count ? t('tree.confirmMove', { count }) : t('tree.confirmMovePlain');
 
         if (!window.confirm(message)) return;
     }
@@ -102,9 +101,7 @@ const moveNode = async (source, targetParent, position) => {
         emit('changed');
         emit(
             'notify',
-            result.slug_changed
-                ? `Áthelyezve – a névütközés miatt az útvonal "${result.slug}" lett`
-                : 'Áthelyezve',
+            result.slug_changed ? t('tree.movedRenamed', { slug: result.slug }) : t('tree.moved'),
             'success',
         );
     } catch (error) {
@@ -113,38 +110,42 @@ const moveNode = async (source, targetParent, position) => {
 };
 
 const addSubgroup = async () => {
-    const name = window.prompt(`Új alcsoport a(z) "${props.node.name}" alatt`);
+    const name = window.prompt(t('tree.promptSubgroup', { name: props.node.name }));
     if (!name) return;
-    await run(() => api.createGroup({ name, parent_id: props.node.id }), 'Alcsoport létrehozva');
+    await run(() => api.createGroup({ name, parent_id: props.node.id }), t('tree.subgroupCreated'));
 };
 
 const addEndpoint = async () => {
-    const name = window.prompt(`Új URL a(z) "${props.node.name}" csoportban (pl. Rendelések)`);
+    const name = window.prompt(t('tree.promptEndpoint', { name: props.node.name }));
     if (!name) return;
-    await run(() => api.createEndpoint({ name, group_id: props.node.id }), 'URL létrehozva');
+    await run(() => api.createEndpoint({ name, group_id: props.node.id }), t('tree.endpointCreated'));
 };
 
 const rename = async () => {
-    const name = window.prompt('Új név', props.node.name);
+    const name = window.prompt(t('tree.promptRename'), props.node.name);
     if (!name || name === props.node.name) return;
     await run(
         () => (isGroup.value ? api.updateGroup(props.node.id, { name }) : api.updateEndpoint(props.node.id, { name })),
-        'Átnevezve',
+        t('tree.renamed'),
     );
 };
 
 const remove = async () => {
-    const what = isGroup.value ? 'a csoportot az összes alcsoporttal, URL-lel és üzenettel' : 'az URL-t az összes üzenetével';
-    if (!window.confirm(`Biztosan törlöd ${what} együtt?\n\n"${props.node.name}"`)) return;
+    const question = isGroup.value
+        ? t('tree.confirmDeleteGroup', { name: props.node.name })
+        : t('tree.confirmDeleteEndpoint', { name: props.node.name });
+
+    if (!window.confirm(question)) return;
+
     await run(
         () => (isGroup.value ? api.deleteGroup(props.node.id) : api.deleteEndpoint(props.node.id)),
-        'Törölve',
+        t('tree.deleted'),
     );
 };
 
 const copyUrl = async () => {
     await copyText(props.node.url);
-    emit('notify', 'URL a vágólapon', 'success');
+    emit('notify', t('tree.urlCopied'), 'success');
     menu.value = false;
 };
 
@@ -209,25 +210,25 @@ const run = async (fn, message) => {
                 <span
                     v-if="node.unread_count"
                     class="ml-auto shrink-0 rounded-full bg-blue-600 px-1.5 text-[11px] font-semibold text-white"
-                    :title="`${node.unread_count} olvasatlan üzenet`"
+                    :title="$t('tree.unreadBadge', { count: node.unread_count })"
                 >
                     {{ node.unread_count }}
                 </span>
                 <span
                     v-else-if="!isGroup && node.messages_count"
                     class="ml-auto shrink-0 rounded-full bg-slate-100 px-1.5 text-[11px] text-slate-500 dark:bg-slate-800 dark:text-slate-400"
-                    :title="`Utolsó üzenet: ${relativeTime(node.last_message_at)}`"
+                    :title="$t('tree.lastMessage', { when: relativeTime(node.last_message_at) })"
                 >
                     {{ node.messages_count }}
                 </span>
                 <span
                     v-if="node.rules_count"
                     class="shrink-0 text-[11px] text-emerald-600 dark:text-emerald-400"
-                    :title="`${node.rules_count} aktív szabály`"
+                    :title="$t('tree.activeRules', { count: node.rules_count })"
                 >
                     ⚡ {{ node.rules_count }}
                 </span>
-                <span v-if="!isGroup && node.enabled === false" class="shrink-0 text-[11px] text-red-500 dark:text-red-400">szünetel</span>
+                <span v-if="!isGroup && node.enabled === false" class="shrink-0 text-[11px] text-red-500 dark:text-red-400">{{ $t('tree.paused') }}</span>
             </button>
 
             <button
@@ -243,20 +244,20 @@ const run = async (fn, message) => {
                 @mouseleave="menu = false"
             >
                 <template v-if="isGroup">
-                    <button class="menu-item" @click="addSubgroup">Új alcsoport…</button>
-                    <button class="menu-item" @click="addEndpoint">Új URL a csoportban…</button>
+                    <button class="menu-item" @click="addSubgroup">{{ $t('tree.menuNewSubgroup') }}</button>
+                    <button class="menu-item" @click="addEndpoint">{{ $t('tree.menuNewEndpoint') }}</button>
                 </template>
                 <template v-else>
-                    <button class="menu-item" @click="copyUrl">URL másolása</button>
+                    <button class="menu-item" @click="copyUrl">{{ $t('tree.menuCopyUrl') }}</button>
                     <button class="menu-item" @click="menu = false; select(); emit('open-settings', 'endpoint')">
-                        Beállítások…
+                        {{ $t('tree.menuSettings') }}
                     </button>
                 </template>
                 <button class="menu-item" @click="menu = false; select(); emit('open-settings', 'rules')">
-                    Szabályok…
+                    {{ $t('tree.menuRules') }}
                 </button>
-                <button class="menu-item" @click="rename">Átnevezés…</button>
-                <button class="menu-item text-red-600 dark:text-red-400" @click="remove">Törlés…</button>
+                <button class="menu-item" @click="rename">{{ $t('tree.menuRename') }}</button>
+                <button class="menu-item text-red-600 dark:text-red-400" @click="remove">{{ $t('tree.menuDelete') }}</button>
             </div>
         </div>
 

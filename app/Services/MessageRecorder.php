@@ -11,7 +11,7 @@ use Illuminate\Support\Str;
 class MessageRecorder
 {
     /**
-     * Beérkező HTTP-kérés eltárolása üzenetként.
+     * Store an incoming HTTP request as a message.
      */
     public function record(Endpoint $endpoint, Request $request, string $suffix = ''): Message
     {
@@ -72,8 +72,9 @@ class MessageRecorder
     }
 
     /**
-     * A test strukturált formája, ha kinyerhető: JSON, form-urlencoded vagy multipart mezők.
-     * Erre hivatkoznak a szabályok és a sablonok `json.` előtaggal.
+     * The structured form of the body where one can be extracted: JSON,
+     * form-urlencoded or multipart fields. Rules and templates reach it
+     * through the `json.` prefix.
      *
      * @return array<string, mixed>|null
      */
@@ -100,7 +101,7 @@ class MessageRecorder
             return $this->postFields($request);
         }
 
-        // Content-Type nélkül érkező űrlap-mezők (van, aki így küld)
+        // Form fields arriving without a Content-Type — some senders do this
         return $this->postFields($request);
     }
 
@@ -141,7 +142,7 @@ class MessageRecorder
 
     private function clientIp(Request $request): ?string
     {
-        // Reverse proxy (nginx-proxy-manager / Cloudflare) mögött a valódi IP a fejlécben van.
+        // Behind a reverse proxy (nginx-proxy-manager / Cloudflare) the real IP is in a header.
         $forwarded = $request->header('CF-Connecting-IP')
             ?? $request->header('X-Forwarded-For');
 

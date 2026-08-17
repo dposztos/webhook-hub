@@ -68,7 +68,7 @@ class EndpointController extends Controller
     }
 
     /**
-     * Titok cseréje: a régi URL azonnal érvénytelen lesz.
+     * Rotate the secret; the old URL stops working immediately.
      */
     public function rotateSecret(Endpoint $endpoint): JsonResponse
     {

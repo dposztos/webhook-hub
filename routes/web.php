@@ -48,6 +48,6 @@ Route::middleware('auth')->group(function () {
         Route::post('/test/action', [TestController::class, 'action']);
     });
 
-    // Az egyoldalas felület minden más útvonalon (a /u/ ingest kivételével).
+    // The single-page UI on every other path (except the /u/ ingest route).
     Route::get('/{any?}', fn () => view('app'))->where('any', '^(?!u/|api/).*$');
 });

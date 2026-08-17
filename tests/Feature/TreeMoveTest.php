@@ -23,7 +23,7 @@ class TreeMoveTest extends TestCase
         return $this->postJson('/api/tree/move', $payload);
     }
 
-    public function test_endpoint_athelyezese_masik_csoportba_megvaltoztatja_az_url_t(): void
+    public function test_moving_an_endpoint_to_another_group_changes_its_url(): void
     {
         $a = Group::create(['name' => 'A', 'slug' => 'a']);
         $b = Group::create(['name' => 'B', 'slug' => 'b']);
@@ -36,19 +36,19 @@ class TreeMoveTest extends TestCase
         $this->assertStringContainsString('/u/b/hook/', $endpoint->fresh()->url());
     }
 
-    public function test_csoport_athelyezesekor_a_gyerekek_url_je_is_kovet(): void
+    public function test_moving_a_group_updates_the_urls_of_its_children(): void
     {
-        $customers = Group::create(['name' => 'Ügyfelek', 'slug' => 'ugyfelek']);
-        $archive = Group::create(['name' => 'Archív', 'slug' => 'archiv']);
+        $customers = Group::create(['name' => 'Customers', 'slug' => 'customers']);
+        $archive = Group::create(['name' => 'Archive', 'slug' => 'archive']);
         $abc = Group::create(['name' => 'ABC', 'slug' => 'abc', 'parent_id' => $customers->id]);
-        $endpoint = Endpoint::create(['name' => 'Rendelés', 'slug' => 'rendeles', 'group_id' => $abc->id]);
+        $endpoint = Endpoint::create(['name' => 'Order', 'slug' => 'order', 'group_id' => $abc->id]);
 
         $this->move(['type' => 'group', 'id' => $abc->id, 'parent_id' => $archive->id])->assertOk();
 
-        $this->assertStringContainsString('/u/archiv/abc/rendeles/', $endpoint->fresh()->url());
+        $this->assertStringContainsString('/u/archive/abc/order/', $endpoint->fresh()->url());
     }
 
-    public function test_nevutkozes_eseten_sorszamozott_slugot_kap(): void
+    public function test_a_name_clash_yields_a_numbered_slug(): void
     {
         $a = Group::create(['name' => 'A', 'slug' => 'a']);
         $b = Group::create(['name' => 'B', 'slug' => 'b']);
@@ -61,10 +61,10 @@ class TreeMoveTest extends TestCase
         $this->assertSame('hook-2', $moved->fresh()->slug);
     }
 
-    public function test_csoport_nem_kerulhet_sajat_leszarmazottja_ala(): void
+    public function test_a_group_cannot_be_moved_under_its_own_descendant(): void
     {
-        $parent = Group::create(['name' => 'Szülő', 'slug' => 'szulo']);
-        $child = Group::create(['name' => 'Gyerek', 'slug' => 'gyerek', 'parent_id' => $parent->id]);
+        $parent = Group::create(['name' => 'Parent', 'slug' => 'parent']);
+        $child = Group::create(['name' => 'Child', 'slug' => 'child', 'parent_id' => $parent->id]);
 
         $this->move(['type' => 'group', 'id' => $parent->id, 'parent_id' => $child->id])
             ->assertStatus(422);
@@ -72,21 +72,21 @@ class TreeMoveTest extends TestCase
         $this->assertNull($parent->fresh()->parent_id);
     }
 
-    public function test_sorrend_valtoztatasa_a_testverek_kozott(): void
+    public function test_reordering_among_siblings(): void
     {
         $group = Group::create(['name' => 'G', 'slug' => 'g']);
-        $first = Endpoint::create(['name' => 'Első', 'slug' => 'elso', 'group_id' => $group->id, 'position' => 0]);
-        $second = Endpoint::create(['name' => 'Második', 'slug' => 'masodik', 'group_id' => $group->id, 'position' => 1]);
-        $third = Endpoint::create(['name' => 'Harmadik', 'slug' => 'harmadik', 'group_id' => $group->id, 'position' => 2]);
+        $first = Endpoint::create(['name' => 'First', 'slug' => 'first', 'group_id' => $group->id, 'position' => 0]);
+        $second = Endpoint::create(['name' => 'Second', 'slug' => 'second', 'group_id' => $group->id, 'position' => 1]);
+        $third = Endpoint::create(['name' => 'Third', 'slug' => 'third', 'group_id' => $group->id, 'position' => 2]);
 
-        // A harmadikat az első elé
+        // Put the third one before the first
         $this->move(['type' => 'endpoint', 'id' => $third->id, 'parent_id' => $group->id, 'position' => 0])->assertOk();
 
         $order = Endpoint::where('group_id', $group->id)->orderBy('position')->pluck('slug')->all();
-        $this->assertSame(['harmadik', 'elso', 'masodik'], $order);
+        $this->assertSame(['third', 'first', 'second'], $order);
     }
 
-    public function test_gyokerbe_emeles(): void
+    public function test_promoting_to_the_root(): void
     {
         $group = Group::create(['name' => 'G', 'slug' => 'g']);
         $endpoint = Endpoint::create(['name' => 'Hook', 'slug' => 'hook', 'group_id' => $group->id]);

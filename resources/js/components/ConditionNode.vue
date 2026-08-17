@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue';
+import { t } from '../i18n';
 
 const props = defineProps({
     node: { type: Object, required: true },
@@ -9,36 +10,17 @@ const props = defineProps({
 
 const emit = defineEmits(['update', 'remove']);
 
-const SOURCES = [
-    { value: 'json', label: 'JSON mező' },
-    { value: 'header', label: 'Fejléc' },
-    { value: 'query', label: 'Query paraméter' },
-    { value: 'meta', label: 'Metaadat' },
-    { value: 'body', label: 'Nyers test' },
+// Values are the wire format and never change; only the labels are translated.
+const SOURCE_VALUES = ['json', 'header', 'query', 'meta', 'body'];
+
+const OPERATOR_VALUES = [
+    'equals', 'not_equals', 'contains', 'not_contains', 'starts_with', 'ends_with',
+    'regex', 'not_regex', 'gt', 'gte', 'lt', 'lte', 'in', 'not_in',
+    'exists', 'not_exists', 'is_empty', 'is_not_empty', 'is_true', 'is_false',
 ];
 
-const OPERATORS = [
-    { value: 'equals', label: 'egyenlő' },
-    { value: 'not_equals', label: 'nem egyenlő' },
-    { value: 'contains', label: 'tartalmazza' },
-    { value: 'not_contains', label: 'nem tartalmazza' },
-    { value: 'starts_with', label: 'ezzel kezdődik' },
-    { value: 'ends_with', label: 'ezzel végződik' },
-    { value: 'regex', label: 'illeszkedik (regex)' },
-    { value: 'not_regex', label: 'nem illeszkedik (regex)' },
-    { value: 'gt', label: 'nagyobb mint' },
-    { value: 'gte', label: 'legalább' },
-    { value: 'lt', label: 'kisebb mint' },
-    { value: 'lte', label: 'legfeljebb' },
-    { value: 'in', label: 'eleme a listának' },
-    { value: 'not_in', label: 'nem eleme a listának' },
-    { value: 'exists', label: 'létezik' },
-    { value: 'not_exists', label: 'nem létezik' },
-    { value: 'is_empty', label: 'üres' },
-    { value: 'is_not_empty', label: 'nem üres' },
-    { value: 'is_true', label: 'igaz' },
-    { value: 'is_false', label: 'hamis' },
-];
+const SOURCES = computed(() => SOURCE_VALUES.map((value) => ({ value, label: t(`source.${value}`) })));
+const OPERATORS = computed(() => OPERATOR_VALUES.map((value) => ({ value, label: t(`operator.${value}`) })));
 
 const VALUELESS = ['exists', 'not_exists', 'is_empty', 'is_not_empty', 'is_true', 'is_false'];
 
@@ -68,32 +50,25 @@ const addGroup = () =>
         children: [...(props.node.children ?? []), { type: 'group', op: 'or', children: [] }],
     });
 
-const placeholder = computed(
-    () =>
-        ({
-            json: 'pl. order.total vagy items.0.sku',
-            header: 'pl. x-signature',
-            query: 'pl. token',
-            meta: 'method, ip, url, size, content_type…',
-            body: '(nem kell mezőnév)',
-        })[props.node.source] ?? '',
+const placeholder = computed(() =>
+    SOURCE_VALUES.includes(props.node.source) ? t(`sourceHint.${props.node.source}`) : '',
 );
 </script>
 
 <template>
-    <!-- Csoport: ÉS/VAGY kapcsolat gyerek-feltételek között -->
+    <!-- Group: AND/OR across the child conditions -->
     <div v-if="isGroup" class="rounded-lg border border-slate-200 bg-slate-50 p-2 dark:bg-slate-800/40 dark:border-slate-800">
         <div class="mb-2 flex items-center gap-2 text-xs">
-            <span class="text-slate-500 dark:text-slate-400">Teljesüljön</span>
+            <span class="text-slate-500 dark:text-slate-400">{{ $t('cond.match') }}</span>
             <select
                 :value="node.op"
                 class="rounded border border-slate-300 bg-white px-1.5 py-0.5 dark:bg-slate-900 dark:border-slate-700"
                 @change="patch({ op: $event.target.value })"
             >
-                <option value="and">MINDEN</option>
-                <option value="or">BÁRMELYIK</option>
+                <option value="and">{{ $t('cond.all') }}</option>
+                <option value="or">{{ $t('cond.any') }}</option>
             </select>
-            <span class="text-slate-500 dark:text-slate-400">alábbi feltétel</span>
+            <span class="text-slate-500 dark:text-slate-400">{{ $t('cond.ofTheFollowing') }}</span>
 
             <label class="ml-2 flex items-center gap-1 text-slate-500 dark:text-slate-400">
                 <input
@@ -102,15 +77,15 @@ const placeholder = computed(
                     class="rounded border-slate-300 dark:border-slate-700"
                     @change="patch({ not: $event.target.checked })"
                 />
-                tagadva
+                {{ $t('cond.negated') }}
             </label>
 
             <div class="ml-auto flex gap-1">
                 <button class="rounded px-1.5 py-0.5 text-blue-600 hover:bg-blue-50 dark:text-blue-400" @click="addCondition">
-                    + feltétel
+                    {{ $t('cond.addCondition') }}
                 </button>
                 <button class="rounded px-1.5 py-0.5 text-slate-500 hover:bg-slate-200 dark:text-slate-400 dark:hover:bg-slate-700" @click="addGroup">
-                    + alcsoport
+                    {{ $t('cond.addGroup') }}
                 </button>
                 <button v-if="!root" class="rounded px-1.5 py-0.5 text-red-500 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/50" @click="emit('remove')">
                     ✕
@@ -119,7 +94,7 @@ const placeholder = computed(
         </div>
 
         <p v-if="!node.children?.length" class="px-1 py-2 text-xs text-slate-400 dark:text-slate-500">
-            Nincs feltétel – a szabály <strong>minden</strong> beérkező üzenetre lefut.
+            {{ $t('cond.empty') }}
         </p>
 
         <div class="space-y-1.5">
@@ -134,7 +109,7 @@ const placeholder = computed(
         </div>
     </div>
 
-    <!-- Egyetlen feltétel -->
+    <!-- A single condition -->
     <div v-else class="flex flex-wrap items-center gap-1.5 rounded-lg border border-slate-200 bg-white p-2 text-xs dark:bg-slate-900 dark:border-slate-800">
         <select
             :value="node.source"
@@ -165,12 +140,12 @@ const placeholder = computed(
         <input
             v-if="needsValue"
             :value="node.value"
-            placeholder="érték"
+            :placeholder="$t('cond.value')"
             class="min-w-0 flex-1 rounded border border-slate-300 px-2 py-1 font-mono dark:border-slate-700"
             @input="patch({ value: $event.target.value })"
         />
 
-        <label v-if="needsValue" class="flex items-center gap-1 text-slate-500 dark:text-slate-400" title="Kis- és nagybetű mindegy">
+        <label v-if="needsValue" class="flex items-center gap-1 text-slate-500 dark:text-slate-400" :title="$t('cond.caseInsensitive')">
             <input
                 type="checkbox"
                 :checked="!!node.ci"

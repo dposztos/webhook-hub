@@ -1,0 +1,87 @@
+# Run Webhook Hub with a prebuilt image:
+#
+#   cp .env.example .env
+#   docker compose run --rm app php artisan key:generate --show   # paste into APP_KEY
+#   docker compose up -d
+#
+# The app is then on http://localhost:8080 (APP_HOST_PORT). Log in with the
+# ADMIN_EMAIL / ADMIN_PASSWORD you set in .env.
+#
+# To build from source instead of pulling, uncomment the "build" line below.
+name: webhook-hub
+
+services:
+  app:
+    image: ghcr.io/cactuska/webhook-hub:latest
+    # build: .
+    container_name: webhook-hub
+    restart: unless-stopped
+    ports:
+      - "${APP_HOST_PORT:-8080}:80"
+    environment:
+      APP_NAME: ${APP_NAME:-Webhook Hub}
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_KEY: ${APP_KEY}
+      APP_URL: ${APP_URL:-http://localhost:8080}
+      APP_TIMEZONE: ${APP_TIMEZONE:-UTC}
+      APP_LOCALE: ${APP_LOCALE:-en}
+      APP_FALLBACK_LOCALE: en
+
+      LOG_CHANNEL: stderr
+      LOG_LEVEL: ${LOG_LEVEL:-warning}
+
+      DB_CONNECTION: pgsql
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_DATABASE: ${DB_DATABASE:-webhookhub}
+      DB_USERNAME: ${DB_USERNAME:-webhookhub}
+      DB_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env}
+
+      SESSION_DRIVER: database
+      # Must be "true" behind HTTPS. Over plain HTTP the browser drops the
+      # session cookie and login silently fails.
+      SESSION_SECURE_COOKIE: ${SESSION_SECURE:-false}
+      QUEUE_CONNECTION: database
+      CACHE_STORE: database
+
+      MAIL_MAILER: ${MAIL_MAILER:-log}
+      MAIL_HOST: ${MAIL_HOST:-}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      # STARTTLS on port 587 wants "smtp"; use "smtps" only for port 465.
+      MAIL_SCHEME: ${MAIL_SCHEME:-smtp}
+      MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS:-webhook-hub@example.com}
+      MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Webhook Hub}
+
+      WEBHOOK_MAX_BODY_BYTES: ${WEBHOOK_MAX_BODY_BYTES:-524288}
+      WEBHOOK_INGEST_RATE_LIMIT: ${WEBHOOK_INGEST_RATE_LIMIT:-600}
+      WEBHOOK_RETENTION_DAYS: ${WEBHOOK_RETENTION_DAYS:-}
+      WEBHOOK_MAX_ACTIONS: ${WEBHOOK_MAX_ACTIONS:-20}
+      WEBHOOK_ALLOWED_RECIPIENTS: ${WEBHOOK_ALLOWED_RECIPIENTS:-}
+
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:16-alpine
+    container_name: webhook-hub-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-webhookhub}
+      POSTGRES_USER: ${DB_USERNAME:-webhookhub}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-webhookhub}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  db-data:

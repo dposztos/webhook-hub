@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue';
 import { api } from '../api';
 import { copyText } from '../format';
 import ModalShell from './ModalShell.vue';
+import { t } from '../i18n';
 
 const props = defineProps({
     endpointId: { type: Number, required: true },
@@ -38,7 +39,7 @@ const save = async () => {
             retention_days: form.value.retention_days ? Number(form.value.retention_days) : null,
             max_messages: form.value.max_messages ? Number(form.value.max_messages) : null,
         });
-        emit('notify', 'Mentve', 'success');
+        emit('notify', t('common.saved'), 'success');
         emit('changed');
         emit('close');
     } catch (error) {
@@ -49,11 +50,11 @@ const save = async () => {
 };
 
 const rotate = async () => {
-    if (!window.confirm('Új titkot generálunk: a jelenlegi URL azonnal érvénytelen lesz. Folytatod?')) return;
+    if (!window.confirm(t('endpoint.confirmRotate'))) return;
 
     try {
         form.value = await api.rotateSecret(props.endpointId);
-        emit('notify', 'Új URL létrehozva – frissítsd a küldő rendszerben!', 'success');
+        emit('notify', t('endpoint.rotated'), 'success');
         emit('changed');
     } catch (error) {
         emit('notify', error.message, 'error');
@@ -62,7 +63,7 @@ const rotate = async () => {
 
 const copyUrl = async () => {
     await copyText(form.value.url);
-    emit('notify', 'URL a vágólapon', 'success');
+    emit('notify', t('tree.urlCopied'), 'success');
 };
 </script>
 
@@ -70,44 +71,44 @@ const copyUrl = async () => {
     <ModalShell
         v-if="form"
         :title="form.name"
-        :subtitle="form.group_path ? `Csoport: ${form.group_path}` : 'Csoport nélküli URL'"
+        :subtitle="form.group_path ? $t('endpoint.inGroup', { path: form.group_path }) : $t('endpoint.ungrouped')"
         @close="emit('close')"
     >
         <div class="space-y-4">
             <div>
-                <label class="lbl">Webhook URL</label>
+                <label class="lbl">{{ $t('endpoint.webhookUrl') }}</label>
                 <div class="flex gap-2">
                     <code class="min-w-0 flex-1 truncate rounded-lg bg-slate-100 px-3 py-2 font-mono text-xs dark:bg-slate-800">{{ form.url }}</code>
-                    <button class="btn-secondary" @click="copyUrl">Másolás</button>
-                    <button class="btn-secondary text-amber-700 dark:text-amber-300" @click="rotate">Új titok</button>
+                    <button class="btn-secondary" @click="copyUrl">{{ $t('common.copy') }}</button>
+                    <button class="btn-secondary text-amber-700 dark:text-amber-300" @click="rotate">{{ $t('endpoint.newSecret') }}</button>
                 </div>
-                <p class="hint">Az útvonal a csoport-hierarchiából és a névből áll, a végén a titok. Átnevezéskor az URL nem változik.</p>
+                <p class="hint">{{ $t('endpoint.urlHint') }}</p>
             </div>
 
             <div class="grid grid-cols-2 gap-3">
                 <div>
-                    <label class="lbl">Név</label>
+                    <label class="lbl">{{ $t('common.name') }}</label>
                     <input v-model="form.name" class="inp" />
                 </div>
                 <div class="flex items-end">
                     <label class="flex items-center gap-2 pb-2 text-sm text-slate-700 dark:text-slate-300">
                         <input v-model="form.enabled" type="checkbox" class="rounded border-slate-300 dark:border-slate-700" />
-                        Aktív (kikapcsolva 404-et ad)
+                        {{ $t('endpoint.enabled') }}
                     </label>
                 </div>
             </div>
 
             <div>
-                <label class="lbl">Leírás</label>
+                <label class="lbl">{{ $t('common.description') }}</label>
                 <textarea v-model="form.description" rows="2" class="inp"></textarea>
             </div>
 
             <fieldset class="rounded-lg border border-slate-200 p-3 dark:border-slate-800">
-                <legend class="px-1 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">Válasz a küldőnek</legend>
+                <legend class="px-1 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">{{ $t('endpoint.responseLegend') }}</legend>
 
                 <div class="grid grid-cols-3 gap-3">
                     <div>
-                        <label class="lbl">Státuszkód</label>
+                        <label class="lbl">{{ $t('endpoint.statusCode') }}</label>
                         <input v-model="form.response_status" type="number" class="inp" />
                     </div>
                     <div>
@@ -115,43 +116,43 @@ const copyUrl = async () => {
                         <input v-model="form.response_content_type" class="inp" />
                     </div>
                     <div>
-                        <label class="lbl">Késleltetés (ms)</label>
+                        <label class="lbl">{{ $t('endpoint.delay') }}</label>
                         <input v-model="form.response_delay_ms" type="number" class="inp" />
                     </div>
                 </div>
 
                 <div class="mt-3">
-                    <label class="lbl">Válasz-test</label>
+                    <label class="lbl">{{ $t('endpoint.responseBody') }}</label>
                     <textarea v-model="form.response_body" rows="2" class="inp font-mono text-xs"></textarea>
                 </div>
 
                 <label class="mt-3 flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
                     <input v-model="form.cors" type="checkbox" class="rounded border-slate-300 dark:border-slate-700" />
-                    CORS fejlécek küldése
+                    {{ $t('endpoint.cors') }}
                 </label>
             </fieldset>
 
             <fieldset class="rounded-lg border border-slate-200 p-3 dark:border-slate-800">
-                <legend class="px-1 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">Megőrzés</legend>
-                <p class="hint mb-2">Üresen hagyva minden üzenet örökre megmarad.</p>
+                <legend class="px-1 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">{{ $t('endpoint.retentionLegend') }}</legend>
+                <p class="hint mb-2">{{ $t('endpoint.retentionHint') }}</p>
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="lbl">Törlés ennyi nap után</label>
-                        <input v-model="form.retention_days" type="number" placeholder="soha" class="inp" />
+                        <label class="lbl">{{ $t('endpoint.retentionDays') }}</label>
+                        <input v-model="form.retention_days" type="number" :placeholder="$t('endpoint.never')" class="inp" />
                     </div>
                     <div>
-                        <label class="lbl">Legfeljebb ennyi üzenet</label>
-                        <input v-model="form.max_messages" type="number" placeholder="korlátlan" class="inp" />
+                        <label class="lbl">{{ $t('endpoint.maxMessages') }}</label>
+                        <input v-model="form.max_messages" type="number" :placeholder="$t('endpoint.unlimited')" class="inp" />
                     </div>
                 </div>
             </fieldset>
         </div>
 
         <template #footer>
-            <button class="btn-primary" :disabled="saving" @click="save">Mentés</button>
-            <button class="btn-secondary" @click="emit('close')">Mégse</button>
-            <span class="ml-auto text-xs text-slate-400 dark:text-slate-500">{{ form.messages_count }} tárolt üzenet</span>
+            <button class="btn-primary" :disabled="saving" @click="save">{{ $t('common.save') }}</button>
+            <button class="btn-secondary" @click="emit('close')">{{ $t('common.cancel') }}</button>
+            <span class="ml-auto text-xs text-slate-400 dark:text-slate-500">{{ $t('endpoint.storedMessages', { count: form.messages_count }) }}</span>
         </template>
     </ModalShell>
 </template>

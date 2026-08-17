@@ -4,8 +4,8 @@
 @source '../**/*.js';
 @source '../**/*.vue';
 
-/* Sötét mód kézi kapcsolóval: a <html> elemen lévő .dark osztály dönt.
-   (Tailwind 4 alapból a rendszer beállítását nézné.) */
+/* Dark mode via a manual toggle: the .dark class on <html> decides.
+   (Tailwind 4 would follow the OS setting by default.) */
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
@@ -19,7 +19,7 @@ body,
     height: 100%;
 }
 
-/* A natív vezérlők (legördülők, jelölőnégyzetek, görgetősáv) is kövessék a témát */
+/* Native controls (selects, checkboxes, scrollbar) should follow the theme too */
 :root {
     color-scheme: light;
 }
@@ -32,7 +32,7 @@ body {
     @apply bg-slate-100 text-slate-800 antialiased dark:bg-slate-950 dark:text-slate-200;
 }
 
-/* Ismétlődő űrlap-elemek a Vue komponensekben */
+/* Form elements repeated across the Vue components */
 .lbl {
     @apply mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400;
 }
@@ -67,7 +67,7 @@ body {
     @apply block w-full px-3 py-1.5 text-left hover:bg-slate-100 dark:hover:bg-slate-800;
 }
 
-/* Belépő oldal (Blade, nem Vue) */
+/* Login page (Blade, not Vue) */
 .login-page {
     @apply flex min-h-screen items-center justify-center bg-slate-100 dark:bg-slate-950;
 }

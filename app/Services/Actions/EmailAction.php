@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Mail;
 use TijsVerkoyen\CssToInlineStyles\CssToInlineStyles;
 
 /**
- * E-mail küldése a beérkezett üzenet adataiból, sablonozott tárggyal és HTML-testtel.
+ * Sends an e-mail built from the captured message, with a templated subject and HTML body.
  */
 class EmailAction implements ActionContract
 {
@@ -32,11 +32,11 @@ class EmailAction implements ActionContract
         }
 
         if (! $to) {
-            return ActionResult::failed('Nincs érvényes címzett (a "to" sablon üresre vagy hibás címre értékelődött).');
+            return ActionResult::failed(__('webhookhub.email.no_recipient'));
         }
 
         if ($subject === '') {
-            $subject = 'Webhook értesítés';
+            $subject = __('webhookhub.email.default_subject');
         }
 
         if (($config['inline_css'] ?? true) && str_contains($html, '<style')) {
@@ -47,7 +47,7 @@ class EmailAction implements ActionContract
 
         if ($blocked) {
             return ActionResult::failed(
-                'A címzett nincs engedélyezve (WEBHOOK_ALLOWED_RECIPIENTS): '.implode(', ', $blocked)
+                __('webhookhub.email.recipient_blocked', ['addresses' => implode(', ', $blocked)])
             );
         }
 
@@ -60,7 +60,7 @@ class EmailAction implements ActionContract
         ];
 
         if ($dryRun) {
-            return ActionResult::skipped('Próbafuttatás – nem ment ki levél', $detail);
+            return ActionResult::skipped(__('webhookhub.email.dry_run'), $detail);
         }
 
         $attachJson = (bool) ($config['attach_json'] ?? false);
@@ -95,11 +95,11 @@ class EmailAction implements ActionContract
             }
         });
 
-        return ActionResult::success('Elküldve: '.implode(', ', $to), $detail);
+        return ActionResult::success(__('webhookhub.email.sent', ['addresses' => implode(', ', $to)]), $detail);
     }
 
     /**
-     * Sablonozott címzett-lista feloldása és szűrése érvényes e-mail címekre.
+     * Renders the recipient template and keeps only the valid e-mail addresses.
      *
      * @param array<string, mixed> $context
      * @return array<int, string>

@@ -34,7 +34,7 @@ class Endpoint extends Model
 
     public static function newSecret(): string
     {
-        // Kisbetű+szám, összetéveszthető karakterek nélkül (0/O, 1/l/I).
+        // Lowercase letters and digits, minus the confusable ones (0/O, 1/l/I).
         $alphabet = 'abcdefghjkmnpqrstuvwxyz23456789';
         $out = '';
         for ($i = 0; $i < 12; $i++) {
@@ -60,7 +60,7 @@ class Endpoint extends Model
     }
 
     /**
-     * Az URL útvonal-része: "ugyfelek/abc123/rendelesek/k7f3q9x2mnpq".
+     * The path part of the URL: "customers/acme/orders/k7f3q9x2mnpq".
      */
     public function pathWithSecret(): string
     {
@@ -77,10 +77,10 @@ class Endpoint extends Model
     }
 
     /**
-     * A tárolt üzenetszámláló újraszámolása.
+     * Recalculate the stored message counter.
      *
-     * A számláló denormalizált (beérkezéskor növeljük), törléskor viszont
-     * a tömeges törlések nem váltanak ki modell-eseményt – ezért számoljuk újra.
+     * The counter is denormalised (incremented on arrival), but bulk deletes
+     * fire no model events — hence the recount.
      */
     public function recountMessages(): void
     {
@@ -90,7 +90,7 @@ class Endpoint extends Model
     }
 
     /**
-     * A csoport-hierarchia ID-i a gyökértől (szabály-öröklődéshez).
+     * IDs of the group chain from the root, used for rule inheritance.
      *
      * @return array<int, int>
      */

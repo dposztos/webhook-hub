@@ -1,3 +1,8 @@
+import { locale, t } from './i18n';
+
+/** Dates follow the active UI language, so a locale switch reformats them too. */
+const intlLocale = () => (locale.value === 'en' ? 'en-GB' : locale.value);
+
 export function formatTime(iso) {
     if (!iso) return '';
     const date = new Date(iso);
@@ -5,18 +10,18 @@ export function formatTime(iso) {
     const sameDay = date.toDateString() === now.toDateString();
 
     return sameDay
-        ? date.toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-        : date.toLocaleString('hu-HU', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+        ? date.toLocaleTimeString(intlLocale(), { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+        : date.toLocaleString(intlLocale(), { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
 }
 
 export function relativeTime(iso) {
-    if (!iso) return 'még nem érkezett';
+    if (!iso) return t('time.never');
     const seconds = Math.round((Date.now() - new Date(iso).getTime()) / 1000);
 
-    if (seconds < 60) return 'most';
-    if (seconds < 3600) return `${Math.floor(seconds / 60)} perce`;
-    if (seconds < 86400) return `${Math.floor(seconds / 3600)} órája`;
-    return `${Math.floor(seconds / 86400)} napja`;
+    if (seconds < 60) return t('time.now');
+    if (seconds < 3600) return t('time.minutesAgo', { count: Math.floor(seconds / 60) });
+    if (seconds < 86400) return t('time.hoursAgo', { count: Math.floor(seconds / 3600) });
+    return t('time.daysAgo', { count: Math.floor(seconds / 86400) });
 }
 
 export function formatSize(bytes) {
@@ -39,7 +44,7 @@ export async function copyText(text) {
         await navigator.clipboard.writeText(text);
         return true;
     } catch {
-        // A vágólap-API csak HTTPS-en (vagy localhoston) elérhető – kézi tartalék.
+        // The clipboard API only exists on HTTPS (or localhost) — manual fallback.
         const area = document.createElement('textarea');
         area.value = text;
         area.style.position = 'fixed';

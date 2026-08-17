@@ -4,8 +4,12 @@ namespace Tests\Unit;
 
 use App\Services\Templating\TemplateException;
 use App\Services\Templating\TemplateRenderer;
-use PHPUnit\Framework\TestCase;
+use Tests\TestCase;
 
+/**
+ * Boots the application because the renderer resolves translated error messages
+ * and the "money" filter's formatting from the container.
+ */
 class TemplateRendererTest extends TestCase
 {
     private TemplateRenderer $renderer;
@@ -15,56 +19,76 @@ class TemplateRendererTest extends TestCase
 
     protected function setUp(): void
     {
+        parent::setUp();
+
         $this->renderer = new TemplateRenderer;
         $this->context = [
-            'json' => ['nev' => 'Teszt Elek', 'osszeg' => 24990, 'tetelek' => ['A-1', 'B-2']],
-            'meta' => ['received_at_hu' => '2026.08.14. 10:00:00'],
+            'json' => ['name' => 'Alex Doe', 'total' => 24990, 'items' => ['A-1', 'B-2']],
+            'meta' => ['received_at_local' => '2026-08-14 10:00:00'],
         ];
     }
 
-    public function test_behelyettesiti_a_json_mezoket(): void
+    public function test_interpolates_json_fields(): void
     {
-        $this->assertSame('Szia Teszt Elek!', $this->renderer->renderHtml('Szia {{ json.nev }}!', $this->context));
+        $this->assertSame('Hi Alex Doe!', $this->renderer->renderHtml('Hi {{ json.name }}!', $this->context));
     }
 
-    public function test_hianyzo_mezo_uresen_marad_es_a_default_mukodik(): void
+    public function test_a_missing_field_renders_empty_and_default_works(): void
     {
-        $this->assertSame('[]', $this->renderer->renderHtml('[{{ json.nincs }}]', $this->context));
-        $this->assertSame('—', $this->renderer->renderHtml("{{ json.nincs|default('—') }}", $this->context));
+        $this->assertSame('[]', $this->renderer->renderHtml('[{{ json.missing }}]', $this->context));
+        $this->assertSame('—', $this->renderer->renderHtml("{{ json.missing|default('—') }}", $this->context));
     }
 
-    public function test_html_t_escapel_a_beerkezett_adatban(): void
+    public function test_escapes_html_inside_captured_data(): void
     {
-        $html = $this->renderer->renderHtml('{{ json.nev }}', ['json' => ['nev' => '<script>alert(1)</script>']]);
+        $html = $this->renderer->renderHtml('{{ json.name }}', ['json' => ['name' => '<script>alert(1)</script>']]);
 
         $this->assertStringNotContainsString('<script>', $html);
         $this->assertStringContainsString('&lt;script&gt;', $html);
     }
 
-    public function test_magyar_formazo_szurok(): void
+    public function test_formatting_filters(): void
     {
-        $this->assertSame('24 990 Ft', $this->renderer->renderHtml('{{ json.osszeg|huf }}', $this->context));
-        $this->assertStringContainsString('<table', $this->renderer->renderHtml('{{ json.tetelek|table }}', $this->context));
+        $this->assertSame('24,990', $this->renderer->renderHtml('{{ json.total|money }}', $this->context));
+        $this->assertSame('24 990 Ft', $this->renderer->renderHtml('{{ json.total|money(" Ft", 0, ",", " ") }}', $this->context));
+        $this->assertStringContainsString('<table', $this->renderer->renderHtml('{{ json.items|table }}', $this->context));
     }
 
-    public function test_ciklus_es_feltetel(): void
+    public function test_deprecated_hungarian_filters_still_work(): void
     {
-        $template = '{% for tetel in json.tetelek %}{{ tetel }};{% endfor %}{% if json.osszeg > 1000 %}nagy{% endif %}';
-
-        $this->assertSame('A-1;B-2;nagy', $this->renderer->renderHtml($template, $this->context));
+        $this->assertSame('24 990 Ft', $this->renderer->renderHtml('{{ json.total|huf }}', $this->context));
+        $this->assertSame(
+            '2026.08.14. 10:00',
+            $this->renderer->renderHtml("{{ meta.received_at_local|hu_date }}", $this->context)
+        );
     }
 
-    public function test_a_homokozo_megallitja_a_nem_engedelyezett_hivasokat(): void
+    public function test_local_date_filter(): void
+    {
+        $this->assertSame(
+            '2026-08-14',
+            $this->renderer->renderHtml("{{ meta.received_at_local|local_date('Y-m-d') }}", $this->context)
+        );
+    }
+
+    public function test_loops_and_conditionals(): void
+    {
+        $template = '{% for item in json.items %}{{ item }};{% endfor %}{% if json.total > 1000 %}big{% endif %}';
+
+        $this->assertSame('A-1;B-2;big', $this->renderer->renderHtml($template, $this->context));
+    }
+
+    public function test_the_sandbox_blocks_disallowed_calls(): void
     {
         $this->expectException(TemplateException::class);
 
         $this->renderer->renderHtml('{{ dump(json) }}', $this->context);
     }
 
-    public function test_ertheto_hibauzenet_rossz_sablonra(): void
+    public function test_gives_a_readable_error_for_a_broken_template(): void
     {
         $this->expectException(TemplateException::class);
-        $this->expectExceptionMessageMatches('/Sablonhiba/');
+        $this->expectExceptionMessageMatches('/Template error/');
 
         $this->renderer->renderHtml('{% if %}', $this->context);
     }

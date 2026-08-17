@@ -1,8 +1,8 @@
 /**
- * Egy tárolt üzenetből újraküldhető parancsokat állít elő a szokásos eszközökhöz.
+ * Turns a stored message back into a ready-to-run command for the usual tools.
  */
 
-// A proxy/böngésző tette rá, nem a küldő – újraküldéskor csak zavarna.
+// Added by the proxy or the browser rather than the sender — noise on a replay.
 const NOISE = [
     'host',
     'content-length',
@@ -24,7 +24,7 @@ const isNoise = (name) => {
     return NOISE.includes(key) || key.startsWith('cf-') || key.startsWith('x-forwarded-') || key.startsWith('sec-ch-');
 };
 
-/** A cél-URL: az endpoint aktuális címe + a bejövő útvonal-maradék és query. */
+/** Target URL: the endpoint's current address plus the captured path suffix and query. */
 export function targetUrl(detail) {
     const base = (detail.endpoint?.url ?? '').replace(/\/$/, '');
     const suffix = detail.path_suffix ? `/${detail.path_suffix}` : '';
@@ -51,7 +51,7 @@ export function usefulHeaders(detail, all = false) {
         .map(([name, value]) => [normalizeName(name), value]);
 }
 
-// A Symfony kisbetűsíti a fejléceket; a szokásos írásmód olvashatóbb.
+// Symfony lower-cases header names; the conventional casing reads better.
 const normalizeName = (name) =>
     name
         .split('-')
@@ -70,7 +70,7 @@ export const TOOLS = [
     { key: 'httpie', label: 'HTTPie', language: 'bash' },
     { key: 'python', label: 'Python', language: 'python' },
     { key: 'javascript', label: 'JavaScript', language: 'javascript' },
-    { key: 'http', label: 'Nyers HTTP', language: 'http' },
+    { key: 'http', labelKey: 'send.rawHttp', language: 'http' },
 ];
 
 export function buildSnippet(tool, detail, { allHeaders = false } = {}) {

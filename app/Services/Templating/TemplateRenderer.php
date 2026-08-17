@@ -10,10 +10,10 @@ use Twig\Sandbox\SecurityPolicy;
 use Twig\TwigFilter;
 
 /**
- * Sablon-renderelés a beérkezett üzenet adataival.
+ * Renders a template against the data of a captured message.
  *
- * Twig fut, de homokozóban: csak engedélyezett tagek/filterek mennek, függvény- és
- * metódushívás nincs. Így a felületen szerkesztett sablon nem tud kitörni a kódba.
+ * Twig runs sandboxed: only allow-listed tags and filters, no function or method
+ * calls. A template edited in the UI therefore cannot reach into the code.
  */
 class TemplateRenderer
 {
@@ -30,7 +30,7 @@ class TemplateRenderer
     }
 
     /**
-     * Egysoros mezők (tárgy, címzett): itt nem kell HTML-escape.
+     * Single-line fields (subject, recipient) — no HTML escaping wanted here.
      *
      * @param array<string, mixed> $context
      */
@@ -54,7 +54,10 @@ class TemplateRenderer
             return $twig->createTemplate($template)->render($context);
         } catch (TwigError $e) {
             throw new TemplateException(
-                sprintf('Sablonhiba (%d. sor): %s', $e->getTemplateLine(), $e->getRawMessage()),
+                __('webhookhub.template.error', [
+                    'line' => $e->getTemplateLine(),
+                    'message' => $e->getRawMessage(),
+                ]),
                 previous: $e
             );
         }
@@ -86,8 +89,10 @@ class TemplateRenderer
                 'keys', 'last', 'length', 'lower', 'merge', 'nl2br', 'number_format', 'raw', 'replace',
                 'reverse', 'round', 'slice', 'sort', 'split', 'striptags', 'title', 'trim', 'upper',
                 'url_encode', 'date', 'column', 'filter', 'map', 'reduce',
-                // saját filterek
-                'huf', 'json_pretty', 'table', 'hu_date',
+                // filters defined below
+                'money', 'json_pretty', 'table', 'local_date',
+                // deprecated Hungarian-specific aliases, kept so older templates keep working
+                'huf', 'hu_date',
             ],
             allowedMethods: [],
             allowedProperties: [],
@@ -108,17 +113,44 @@ class TemplateRenderer
      */
     private function filters(): array
     {
+        $money = function (
+            mixed $value,
+            ?string $suffix = null,
+            ?int $decimals = null,
+            ?string $decimalSeparator = null,
+            ?string $thousandsSeparator = null,
+        ): string {
+            if (! is_numeric($value)) {
+                return (string) $value;
+            }
+
+            $format = (array) config('webhookhub.money');
+
+            return number_format(
+                (float) $value,
+                $decimals ?? (int) ($format['decimals'] ?? 0),
+                $decimalSeparator ?? (string) ($format['decimal_separator'] ?? '.'),
+                $thousandsSeparator ?? (string) ($format['thousands_separator'] ?? ','),
+            ).($suffix ?? (string) ($format['suffix'] ?? ''));
+        };
+
+        // Formats in the app timezone, unlike Twig's built-in date filter which
+        // uses whatever the value carries.
+        $localDate = function (mixed $value, string $format = 'Y-m-d H:i'): string {
+            if ($value === null || $value === '') {
+                return '';
+            }
+
+            $timestamp = is_numeric($value) ? (int) $value : strtotime((string) $value);
+
+            return $timestamp === false ? (string) $value : date($format, $timestamp);
+        };
+
         return [
-            // 24990 → "24 990 Ft"
-            new TwigFilter('huf', function (mixed $value, string $suffix = ' Ft'): string {
-                if (! is_numeric($value)) {
-                    return (string) $value;
-                }
+            // 24990 → "24,990" (see the "money" block in config/webhookhub.php)
+            new TwigFilter('money', $money),
 
-                return number_format((float) $value, 0, ',', ' ').$suffix;
-            }),
-
-            // Tetszőleges érték olvasható JSON-ként
+            // Any value rendered as readable JSON
             new TwigFilter('json_pretty', function (mixed $value): string {
                 return (string) json_encode(
                     $value,
@@ -126,21 +158,19 @@ class TemplateRenderer
                 );
             }),
 
-            // Dátum magyar formában
-            new TwigFilter('hu_date', function (mixed $value, string $format = 'Y.m.d. H:i'): string {
-                if ($value === null || $value === '') {
-                    return '';
-                }
+            new TwigFilter('local_date', $localDate),
 
-                $timestamp = is_numeric($value) ? (int) $value : strtotime((string) $value);
-
-                return $timestamp === false ? (string) $value : date($format, $timestamp);
-            }),
-
-            // Kulcs-érték tömb egyszerű HTML-táblázatként (levélbe beilleszthető)
+            // Key-value array as a simple HTML table that can be pasted into mail
             new TwigFilter('table', function (mixed $value): string {
                 return (new HtmlTable)->render($value);
             }, ['is_safe' => ['html']]),
+
+            // Deprecated aliases from the Hungarian-only era; still honoured so
+            // that templates saved before the rename keep rendering.
+            new TwigFilter('huf', fn (mixed $value, string $suffix = ' Ft'): string => is_numeric($value)
+                ? number_format((float) $value, 0, ',', ' ').$suffix
+                : (string) $value),
+            new TwigFilter('hu_date', fn (mixed $value, string $format = 'Y.m.d. H:i'): string => $localDate($value, $format)),
         ];
     }
 }

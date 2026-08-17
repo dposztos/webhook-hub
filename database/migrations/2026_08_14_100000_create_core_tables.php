@@ -33,14 +33,14 @@ return new class extends Migration
             $table->integer('position')->default(0);
             $table->boolean('enabled')->default(true);
 
-            // A beérkező hívásra adott válasz
+            // The response returned to the caller
             $table->smallInteger('response_status')->default(200);
             $table->text('response_body')->nullable();
             $table->string('response_content_type')->default('text/plain');
             $table->integer('response_delay_ms')->default(0);
             $table->boolean('cors')->default(true);
 
-            // Megőrzés: null = örökre
+            // Retention: null = forever
             $table->integer('retention_days')->nullable();
             $table->integer('max_messages')->nullable();
 
@@ -71,7 +71,7 @@ return new class extends Migration
             $table->text('user_agent')->nullable();
             $table->smallInteger('response_status')->nullable();
 
-            // Szabály-futtatás állapota
+            // State of a rule run
             $table->timestamp('processed_at')->nullable();
             $table->jsonb('matched_rules')->default('[]');
             $table->smallInteger('actions_ok')->default(0);
@@ -83,7 +83,7 @@ return new class extends Migration
             $table->index('created_at');
         });
 
-        // Gyors keresés a JSON-testben
+        // Fast search inside the JSON body
         DB::statement('CREATE INDEX messages_body_json_gin ON messages USING gin (body_json jsonb_path_ops)');
     }
 

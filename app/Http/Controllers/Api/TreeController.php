@@ -12,8 +12,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 /**
- * A fa átszervezése: csoport vagy endpoint áthelyezése másik szülő alá,
- * illetve sorrendezés a testvérek között.
+ * Rearranging the tree: moving a group or endpoint under another parent, and
+ * reordering it among its siblings.
  */
 class TreeController extends Controller
 {
@@ -57,8 +57,8 @@ class TreeController extends Controller
     }
 
     /**
-     * Szabad slug a cél-szülő alatt: ütközéskor sorszámozott változat.
-     * (A slug az URL része, ezért csak akkor nyúlunk hozzá, ha muszáj.)
+     * A free slug under the target parent; on a clash, a numbered variant.
+     * (The slug is part of the URL, so it is only touched when unavoidable.)
      */
     private function availableSlug(Model $node, ?int $parentId): string
     {
@@ -83,7 +83,7 @@ class TreeController extends Controller
     }
 
     /**
-     * A testvérek újraszámozása úgy, hogy az áthelyezett elem a kért helyre kerüljön.
+     * Renumber the siblings so the moved node lands at the requested position.
      */
     private function reorder(Model $node, ?int $parentId, ?int $position): void
     {
@@ -118,7 +118,7 @@ class TreeController extends Controller
 
         if ($parentId === $group->id || in_array($parentId, $group->descendantIds(), true)) {
             throw ValidationException::withMessages([
-                'parent_id' => 'A csoport nem kerülhet önmaga (vagy saját leszármazottja) alá.',
+                'parent_id' => __('webhookhub.validation.group_cycle'),
             ]);
         }
     }

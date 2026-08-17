@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue';
 import { api } from '../api';
 import ModalShell from './ModalShell.vue';
 import RuleEditor from './RuleEditor.vue';
+import { t } from '../i18n';
 
 const props = defineProps({
     selection: { type: Object, required: true },
@@ -45,11 +46,11 @@ const blank = () => ({
 });
 
 const remove = async (rule) => {
-    if (!window.confirm(`Törlöd a(z) "${rule.name}" szabályt?`)) return;
+    if (!window.confirm(t('rules.confirmDelete', { name: rule.name }))) return;
 
     try {
         await api.deleteRule(rule.id);
-        emit('notify', 'Szabály törölve', 'success');
+        emit('notify', t('rules.deleted'), 'success');
         emit('changed');
         load();
     } catch (error) {
@@ -87,25 +88,20 @@ const saved = () => {
 
     <ModalShell
         v-else
-        title="Szabályok"
-        :subtitle="`${selection.type === 'group' ? 'Csoport' : 'URL'}: ${selection.name}`"
+        :title="$t('rules.title')"
+        :subtitle="$t(selection.type === 'group' ? 'rules.scopeGroup' : 'rules.scopeEndpoint', { name: selection.name })"
         wide
         @close="emit('close')"
     >
         <p class="mb-3 text-sm text-slate-500 dark:text-slate-400">
-            <template v-if="selection.type === 'group'">
-                A csoportra tett szabály az alatta lévő <strong>összes</strong> URL-re lefut.
-            </template>
-            <template v-else>
-                Itt az ehhez az URL-hez tartozó saját szabályok látszanak. A fölötte lévő csoportok szabályai
-                szintén lefutnak, azokat a csoport során lehet szerkeszteni.
-            </template>
+            <template v-if="selection.type === 'group'">{{ $t('rules.groupHint') }}</template>
+            <template v-else>{{ $t('rules.endpointHint') }}</template>
         </p>
 
-        <p v-if="loading" class="py-6 text-center text-sm text-slate-400 dark:text-slate-500">Betöltés…</p>
+        <p v-if="loading" class="py-6 text-center text-sm text-slate-400 dark:text-slate-500">{{ $t('common.loading') }}</p>
 
         <p v-else-if="!rules.length" class="rounded-lg border border-dashed border-slate-300 py-8 text-center text-sm text-slate-400 dark:border-slate-700 dark:text-slate-500">
-            Még nincs szabály.
+            {{ $t('rules.empty') }}
         </p>
 
         <div
@@ -117,22 +113,22 @@ const saved = () => {
             <div class="min-w-0 flex-1">
                 <p class="truncate text-sm font-medium text-slate-800 dark:text-slate-200">{{ rule.name }}</p>
                 <p class="truncate text-xs text-slate-500 dark:text-slate-400">
-                    {{ rule.actions?.length ?? 0 }} akció · prioritás {{ rule.priority }}
-                    <span v-if="rule.match_count"> · {{ rule.match_count }}× illeszkedett</span>
-                    <span v-if="rule.stop_processing"> · itt megáll a feldolgozás</span>
+                    {{ $t('rules.summary', { count: rule.actions?.length ?? 0, priority: rule.priority }) }}
+                    <span v-if="rule.match_count"> · {{ $t('rules.matchCount', { count: rule.match_count }) }}</span>
+                    <span v-if="rule.stop_processing"> · {{ $t('rules.stopsHere') }}</span>
                 </p>
             </div>
 
             <button class="btn-secondary text-xs" @click="toggle(rule)">
-                {{ rule.enabled ? 'Szünetel' : 'Bekapcsol' }}
+                {{ rule.enabled ? $t('rules.pause') : $t('rules.enable') }}
             </button>
-            <button class="btn-secondary text-xs" @click="editing = { ...rule }">Szerkesztés</button>
-            <button class="btn-danger text-xs" @click="remove(rule)">Törlés</button>
+            <button class="btn-secondary text-xs" @click="editing = { ...rule }">{{ $t('common.edit') }}</button>
+            <button class="btn-danger text-xs" @click="remove(rule)">{{ $t('common.delete') }}</button>
         </div>
 
         <template #footer>
-            <button class="btn-primary" @click="editing = blank()">+ Új szabály</button>
-            <button class="btn-secondary" @click="emit('close')">Bezár</button>
+            <button class="btn-primary" @click="editing = blank()">{{ $t('rules.new') }}</button>
+            <button class="btn-secondary" @click="emit('close')">{{ $t('common.close') }}</button>
         </template>
     </ModalShell>
 </template>

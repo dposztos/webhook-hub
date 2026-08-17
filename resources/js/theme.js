@@ -2,12 +2,6 @@ const KEY = 'webhookhub-theme';
 
 export const MODES = ['system', 'light', 'dark'];
 
-export const MODE_LABELS = {
-    system: 'Rendszer szerint',
-    light: 'Világos',
-    dark: 'Sötét',
-};
-
 export function storedMode() {
     const mode = localStorage.getItem(KEY);
     return MODES.includes(mode) ? mode : 'system';
@@ -24,7 +18,7 @@ export function applyMode(mode) {
     return dark;
 }
 
-/** A rendszer-beállítás változását csak "system" módban követjük. */
+/** The OS setting is only followed while the mode is "system". */
 export function watchSystem(onChange) {
     window.matchMedia?.('(prefers-color-scheme: dark)').addEventListener('change', () => {
         if (storedMode() === 'system') onChange();

@@ -43,7 +43,7 @@ class ConditionEvaluatorTest extends TestCase
         return $this->evaluator->evaluate($node, $context);
     }
 
-    public function test_feltetel_nelkul_minden_uzenetre_illeszkedik(): void
+    public function test_matches_every_message_when_there_are_no_conditions(): void
     {
         $this->assertTrue($this->check($this->group('and', []), $this->ctx(['a' => 1])));
     }
@@ -65,11 +65,11 @@ class ConditionEvaluatorTest extends TestCase
         $this->assertFalse($this->check($this->group('and', [$this->cond('total', 'gt', '10000')]), $this->ctx(['total' => '9 900'])));
         $this->assertTrue($this->check($this->group('and', [$this->cond('total', 'lte', 100)]), $this->ctx(['total' => 100])));
 
-        // Nem számszerű értéken a nagyobb/kisebb nem illeszkedik, de nem is dob hibát.
+        // On a non-numeric value greater/less does not match, but must not throw either.
         $this->assertFalse($this->check($this->group('and', [$this->cond('total', 'gt', '10')]), $this->ctx(['total' => 'sok'])));
     }
 
-    public function test_melyen_fekvo_es_tombos_mezoket_is_elér(): void
+    public function test_reaches_deeply_nested_and_array_fields(): void
     {
         $context = $this->ctx(['order' => ['items' => [['sku' => 'A-1'], ['sku' => 'B-2']]]]);
 
@@ -77,7 +77,7 @@ class ConditionEvaluatorTest extends TestCase
         $this->assertTrue($this->check($this->group('and', [$this->cond('order.items.*.sku', 'contains', 'A-1')]), $context));
     }
 
-    public function test_hianyzo_mezot_nem_teveszt_ossze_az_uressel(): void
+    public function test_a_missing_field_is_not_confused_with_an_empty_one(): void
     {
         $context = $this->ctx(['a' => '', 'b' => null]);
 
@@ -98,7 +98,7 @@ class ConditionEvaluatorTest extends TestCase
         ));
     }
 
-    public function test_egymasba_agyazott_es_vagy_csoportok(): void
+    public function test_nested_and_or_groups(): void
     {
         $context = $this->ctx(['event' => 'order.paid', 'total' => 500, 'orszag' => 'HU']);
 
@@ -120,7 +120,7 @@ class ConditionEvaluatorTest extends TestCase
         $this->assertTrue($this->check($this->group('and', [$this->cond('a', 'regex', '^ORD-\d+$')]), $this->ctx(['a' => 'ORD-42'])));
     }
 
-    public function test_nyomkovetest_ad_a_dontesrol(): void
+    public function test_produces_a_trace_of_the_decision(): void
     {
         $this->check($this->group('and', [$this->cond('total', 'gt', 10000)]), $this->ctx(['total' => 24990]));
 

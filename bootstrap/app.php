@@ -11,8 +11,8 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
         then: function () {
-            // A beérkező webhookok külön csoportban futnak: nincs session,
-            // nincs CSRF, csak sebesség-korlát.
+            // Incoming webhooks run in their own group: no session, no CSRF,
+            // only rate limiting.
             Route::middleware('ingest')
                 ->group(base_path('routes/ingest.php'));
         },
@@ -24,7 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->redirectGuestsTo('/login');
 
-        // Reverse proxy (nginx-proxy-manager / Cloudflare) mögött futunk.
+        // We run behind a reverse proxy (nginx-proxy-manager / Cloudflare).
         $middleware->trustProxies(at: '*');
     })
     ->withExceptions(function (Exceptions $exceptions): void {

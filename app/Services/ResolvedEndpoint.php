@@ -12,8 +12,8 @@ class ResolvedEndpoint
     ) {}
 
     /**
-     * A "/404" alakú lezáró szegmens felülírja a válasz státuszkódját
-     * (a webhook.site eredeti viselkedése).
+     * A trailing segment such as "/404" overrides the response status code
+     * (the original webhook.site behaviour).
      */
     public function statusOverride(): ?int
     {

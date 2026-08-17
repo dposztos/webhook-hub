@@ -1,10 +1,11 @@
-# Portainer stack a webhook-hubhoz.
-# Az image a Gitea registryből jön (git.posztos.com/homelab/webhook-hub), a deploy
-# pullImage=true-val megy. Build: a docker-proxy /build végpontján, a cél-endpointon,
-# utána tag + push a registrybe.
+# Portainer stack for Webhook Hub.
+#
+# Same services as the root docker-compose.yml, but with the environment values
+# supplied by Portainer's stack editor rather than an .env file. Set every
+# ${VARIABLE} below under "Environment variables" when you deploy the stack.
 services:
   app:
-    image: git.posztos.com/homelab/webhook-hub:latest
+    image: ghcr.io/cactuska/webhook-hub:latest
     container_name: webhook-hub
     restart: unless-stopped
     ports:
@@ -15,8 +16,8 @@ services:
       APP_DEBUG: "false"
       APP_KEY: ${APP_KEY}
       APP_URL: ${APP_URL}
-      APP_TIMEZONE: Europe/Budapest
-      APP_LOCALE: hu
+      APP_TIMEZONE: ${APP_TIMEZONE}
+      APP_LOCALE: ${APP_LOCALE}
 
       LOG_CHANNEL: stderr
       LOG_LEVEL: warning
@@ -29,7 +30,8 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
 
       SESSION_DRIVER: database
-      # HTTPS mögött legyen "true"; sima HTTP-s eléréssel a belépés nem működne.
+      # Must be "true" behind HTTPS. Over plain HTTP the browser drops the
+      # session cookie and you will not be able to log in.
       SESSION_SECURE_COOKIE: ${SESSION_SECURE}
       QUEUE_CONNECTION: database
       CACHE_STORE: database
@@ -39,8 +41,8 @@ services:
       MAIL_PORT: ${MAIL_PORT}
       MAIL_USERNAME: ${MAIL_USERNAME}
       MAIL_PASSWORD: ${MAIL_PASSWORD}
-      # 587-es porton STARTTLS: a séma "smtp" (a "smtps" a 465-höz való).
-      MAIL_SCHEME: smtp
+      # STARTTLS on port 587 wants scheme "smtp"; use "smtps" only for port 465.
+      MAIL_SCHEME: ${MAIL_SCHEME}
       MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
       MAIL_FROM_NAME: ${MAIL_FROM_NAME}
 

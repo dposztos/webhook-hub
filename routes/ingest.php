@@ -3,5 +3,5 @@
 use App\Http\Controllers\IngestController;
 use Illuminate\Support\Facades\Route;
 
-// Minden beérkező webhook: /u/<csoport>/<alcsoport>/<endpoint>/<titok>[/<bármi>]
+// Every incoming webhook: /u/<group>/<subgroup>/<endpoint>/<secret>[/<anything>]
 Route::any('/u/{path}', IngestController::class)->where('path', '.*');

@@ -3,13 +3,13 @@
 namespace App\Services\Rules;
 
 /**
- * Mezőhivatkozás feloldása a kontextusból: forrás + pont-jelöléses útvonal.
+ * Resolves a field reference against the context: a source plus a dotted path.
  *
- *   json    → a beérkezett JSON test:      "customer.email", "items.0.sku", "items.*.sku"
- *   header  → HTTP-fejléc (kis/nagybetű mindegy): "x-signature"
- *   query   → URL query-paraméter
+ *   json    → the captured JSON body:      "customer.email", "items.0.sku", "items.*.sku"
+ *   header  → HTTP header (case-insensitive): "x-signature"
+ *   query   → URL query parameter
  *   meta    → method, ip, url, size, received_at, content_type …
- *   body    → a nyers test szövegként (az útvonal ilyenkor nem számít)
+ *   body    → the raw body as text (the path is ignored in this case)
  */
 class ValueResolver
 {

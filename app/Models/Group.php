@@ -35,7 +35,7 @@ class Group extends Model
     }
 
     /**
-     * A gyökértől eddig a csoportig vezető lánc (a csoportot is beleértve).
+     * The chain from the root down to this group, this group included.
      *
      * @return Collection<int, Group>
      */
@@ -57,7 +57,7 @@ class Group extends Model
     }
 
     /**
-     * Slug-ok a gyökértől: ["ugyfelek", "abc123"].
+     * Slugs from the root: ["customers", "acme"].
      *
      * @return array<int, string>
      */
@@ -72,7 +72,7 @@ class Group extends Model
     }
 
     /**
-     * Ennek a csoportnak és minden leszármazottjának az ID-i.
+     * IDs of this group and every descendant of it.
      *
      * @return array<int, int>
      */

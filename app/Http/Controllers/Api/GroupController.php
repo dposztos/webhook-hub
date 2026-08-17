@@ -14,7 +14,7 @@ use Illuminate\Validation\ValidationException;
 class GroupController extends Controller
 {
     /**
-     * A teljes fa: csoportok (tetszőleges mélységig) és bennük az endpointok.
+     * The whole tree: groups (to any depth) and the endpoints inside them.
      */
     public function tree(): JsonResponse
     {
@@ -32,7 +32,7 @@ class GroupController extends Controller
 
         $endpointsByGroup = $endpoints->groupBy(fn (Endpoint $e) => $e->group_id ?? 0);
 
-        // Az olvasatlanok száma nem denormalizált érték: egy lekérdezésből jön.
+        // The unread count is not denormalised; it comes from a single query.
         $unread = DB::table('messages')
             ->selectRaw('endpoint_id, count(*) as total')
             ->whereNull('read_at')
@@ -60,7 +60,7 @@ class GroupController extends Controller
                         'rules_count' => (int) ($rulesByGroup[$group->id] ?? 0),
                         'children' => $children,
                         'endpoints' => $groupEndpoints,
-                        // A csoportnál az alatta lévő összes olvasatlan összege látszik.
+                        // A group shows the sum of every unread message below it.
                         'unread_count' => collect($children)->sum('unread_count')
                             + collect($groupEndpoints)->sum('unread_count'),
                     ];
@@ -104,8 +104,8 @@ class GroupController extends Controller
             $this->guardAgainstCycle($group, $data['parent_id']);
         }
 
-        // A slug az URL része: átnevezéskor nem változtatjuk magától,
-        // mert azzal minden addigi webhook-cím elromlana.
+        // The slug is part of the URL, so a rename never changes it on its own —
+        // that would break every webhook address handed out so far.
         $group->fill($data)->save();
 
         return response()->json($group);
@@ -113,7 +113,7 @@ class GroupController extends Controller
 
     public function destroy(Group $group): JsonResponse
     {
-        // A kaszkád törli az alcsoportokat, endpointokat és üzeneteket is.
+        // The cascade removes subgroups, endpoints and messages as well.
         $group->delete();
 
         return response()->json(['deleted' => true]);
@@ -162,7 +162,7 @@ class GroupController extends Controller
 
         if ($parentId === $group->id || in_array($parentId, $group->descendantIds(), true)) {
             throw ValidationException::withMessages([
-                'parent_id' => 'A csoport nem kerülhet önmaga (vagy saját leszármazottja) alá.',
+                'parent_id' => __('webhookhub.validation.group_cycle'),
             ]);
         }
     }

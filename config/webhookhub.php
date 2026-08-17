@@ -1,20 +1,29 @@
 <?php
 
 return [
-    // A tárolt kérés-test maximális mérete bájtban (efölött csonkolva tároljuk).
+    // Largest request body kept, in bytes. Anything above this is stored truncated.
     'max_body_bytes' => (int) env('WEBHOOK_MAX_BODY_BYTES', 512 * 1024),
 
-    // Beérkező kérések percenkénti korlátja IP-nként (0 = nincs korlát).
+    // Incoming requests per minute per IP address (0 = no limit).
     'ingest_rate_limit' => (int) env('WEBHOOK_INGEST_RATE_LIMIT', 600),
 
-    // Alapértelmezett megőrzés: null = örökre. Endpointonként felülírható.
+    // Default retention: null = forever. Each endpoint can override it.
     'default_retention_days' => env('WEBHOOK_RETENTION_DAYS') ? (int) env('WEBHOOK_RETENTION_DAYS') : null,
 
-    // Egy üzenetre futtatható akciók maximális száma (védelem szabály-hurok ellen).
+    // Ceiling on actions run for one message, as a guard against rule loops.
     'max_actions_per_message' => (int) env('WEBHOOK_MAX_ACTIONS', 20),
 
     'mail' => [
-        // Az akciókban megadható címzettek korlátozása, ha kell: ["*@ceg.hu"]
+        // Restrict who actions may e-mail, if you need it: ["*@example.com"]
         'allowed_recipients' => array_filter(explode(',', (string) env('WEBHOOK_ALLOWED_RECIPIENTS', ''))),
+    ],
+
+    // Formatting used by the "money" template filter. The defaults are plain
+    // English; a Hungarian setup would use ' Ft', ',' and ' '.
+    'money' => [
+        'decimals' => (int) env('WEBHOOK_MONEY_DECIMALS', 0),
+        'decimal_separator' => env('WEBHOOK_MONEY_DECIMAL_SEPARATOR', '.'),
+        'thousands_separator' => env('WEBHOOK_MONEY_THOUSANDS_SEPARATOR', ','),
+        'suffix' => env('WEBHOOK_MONEY_SUFFIX', ''),
     ],
 ];

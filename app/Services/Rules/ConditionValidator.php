@@ -3,18 +3,20 @@
 namespace App\Services\Rules;
 
 /**
- * A felületről érkező feltétel-fa szerkezeti ellenőrzése mentés előtt.
+ * Structural check of the condition tree coming from the UI, run before saving.
  */
 class ConditionValidator
 {
     /**
      * @param array<string, mixed> $node
-     * @return array<int, string> hibaüzenetek (üres tömb = rendben)
+     * @return array<int, string> error messages (empty array = valid)
      */
-    public function validate(array $node, int $depth = 0, string $path = 'feltételek'): array
+    public function validate(array $node, int $depth = 0, ?string $path = null): array
     {
+        $path ??= __('webhookhub.conditions.root');
+
         if ($depth > 16) {
-            return ['Túl mélyen egymásba ágyazott feltételek.'];
+            return [__('webhookhub.conditions.too_deep')];
         }
 
         $type = $node['type'] ?? 'group';
@@ -23,12 +25,12 @@ class ConditionValidator
             $errors = [];
 
             if (! in_array(strtolower((string) ($node['op'] ?? 'and')), ['and', 'or'], true)) {
-                $errors[] = "{$path}: az összekötés csak ÉS vagy VAGY lehet.";
+                $errors[] = __('webhookhub.conditions.bad_operator_join', ['path' => $path]);
             }
 
             foreach ((array) ($node['children'] ?? []) as $i => $child) {
                 if (! is_array($child)) {
-                    $errors[] = "{$path}: érvénytelen elem a(z) {$i}. helyen.";
+                    $errors[] = __('webhookhub.conditions.bad_child', ['path' => $path, 'index' => $i]);
 
                     continue;
                 }
@@ -44,15 +46,15 @@ class ConditionValidator
         $operator = (string) ($node['operator'] ?? '');
 
         if (! in_array($source, ValueResolver::SOURCES, true)) {
-            $errors[] = "{$path}: ismeretlen mezőforrás ({$source}).";
+            $errors[] = __('webhookhub.conditions.unknown_source', ['path' => $path, 'source' => $source]);
         }
 
         if (! in_array($operator, ConditionEvaluator::OPERATORS, true)) {
-            $errors[] = "{$path}: ismeretlen operátor ({$operator}).";
+            $errors[] = __('webhookhub.conditions.unknown_operator', ['path' => $path, 'operator' => $operator]);
         }
 
         if ($source !== 'body' && trim((string) ($node['path'] ?? '')) === '') {
-            $errors[] = "{$path}: a mező neve kötelező.";
+            $errors[] = __('webhookhub.conditions.path_required', ['path' => $path]);
         }
 
         if (in_array($operator, ['regex', 'not_regex'], true)) {
@@ -62,7 +64,7 @@ class ConditionValidator
             restore_error_handler();
 
             if (! $valid) {
-                $errors[] = "{$path}: érvénytelen reguláris kifejezés.";
+                $errors[] = __('webhookhub.conditions.bad_regex', ['path' => $path]);
             }
         }
 

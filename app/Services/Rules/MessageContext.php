@@ -5,7 +5,7 @@ namespace App\Services\Rules;
 use App\Models\Message;
 
 /**
- * Az az adathalmaz, amire a feltételek és a sablonok hivatkozhatnak.
+ * The data set that conditions and templates are allowed to reference.
  */
 class MessageContext
 {
@@ -37,7 +37,9 @@ class MessageContext
                 'content_type' => (string) $message->content_type,
                 'size' => (int) $message->size,
                 'received_at' => optional($message->created_at)->toDateTimeString(),
-                'received_at_hu' => optional($message->created_at)?->timezone('Europe/Budapest')->format('Y.m.d. H:i:s'),
+                'received_at_local' => optional($message->created_at)?->timezone(config('app.timezone'))->format('Y-m-d H:i:s'),
+                // Deprecated alias kept for templates written before the rename.
+                'received_at_hu' => optional($message->created_at)?->timezone(config('app.timezone'))->format('Y-m-d H:i:s'),
                 'is_json' => is_array($message->body_json),
             ],
             'endpoint' => [
@@ -55,7 +57,7 @@ class MessageContext
     }
 
     /**
-     * Példa-kontextus a sablon-szerkesztő súgójához.
+     * Sample context for the hints in the template editor.
      */
     public static function sample(): self
     {
@@ -64,9 +66,13 @@ class MessageContext
             'body' => '{"event":"order.paid"}',
             'headers' => ['content-type' => 'application/json'],
             'query' => [],
-            'meta' => ['method' => 'POST', 'received_at' => now()->toDateTimeString()],
-            'endpoint' => ['name' => 'Rendelések'],
-            'group' => ['name' => 'Ügyfelek', 'path' => 'Ügyfelek / ABC123'],
+            'meta' => [
+                'method' => 'POST',
+                'received_at' => now()->toDateTimeString(),
+                'received_at_local' => now()->format('Y-m-d H:i:s'),
+            ],
+            'endpoint' => ['name' => 'Orders'],
+            'group' => ['name' => 'Customers', 'path' => 'Customers / ACME'],
         ]);
     }
 

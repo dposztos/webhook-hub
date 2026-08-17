@@ -2,8 +2,8 @@
 import { ref } from 'vue';
 
 const props = defineProps({
-    // 'right': a fogantyútól jobbra lévő panel nő, ha jobbra húzzuk (bal oldalsáv)
-    // 'left':  a fogantyútól balra lévő panel nő, ha jobbra húzzuk (jobb oldali panel)
+    // 'right': dragging right grows the panel to the right of the handle (left sidebar)
+    // 'left':  dragging right grows the panel to the left of the handle (right panel)
     grows: { type: String, default: 'right' },
     width: { type: Number, required: true },
     min: { type: Number, default: 200 },
@@ -49,11 +49,11 @@ const reset = () => {
 <template>
     <div
         class="group relative w-px shrink-0 cursor-col-resize bg-slate-200 dark:bg-slate-800"
-        title="Húzd az átméretezéshez (dupla kattintás: alaphelyzet)"
+        :title="$t('resize.title')"
         @mousedown="start"
         @dblclick="reset"
     >
-        <!-- Az egérrel könnyen elkapható, de vizuálisan vékony sáv -->
+        <!-- Easy to grab with the mouse, but visually a hairline -->
         <div
             class="absolute inset-y-0 -left-1 -right-1 transition-colors group-hover:bg-blue-400/40"
             :class="{ 'bg-blue-500/60': dragging }"

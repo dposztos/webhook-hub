@@ -1,9 +1,9 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/laravel",
+    "name": "cactuska/webhook-hub",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "description": "Self-hosted webhook receiver with a group tree, permanent message history, a rule engine and e-mail actions.",
+    "keywords": ["webhook", "webhook-tester", "self-hosted", "laravel", "vue"],
     "license": "MIT",
     "require": {
         "php": "^8.2",

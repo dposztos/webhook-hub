@@ -22,8 +22,8 @@ class RuleEngine
     ) {}
 
     /**
-     * Egy endpointra érvényes szabályok: a sajátjai, a fölötte lévő csoportoké
-     * (a gyökérig), és a globálisak. Prioritás szerint növekvő sorrendben.
+     * Rules that apply to an endpoint: its own, those of every group above it up
+     * to the root, and the global ones. Ordered by ascending priority.
      *
      * @return Collection<int, Rule>
      */
@@ -49,7 +49,7 @@ class RuleEngine
     }
 
     /**
-     * Az üzenet átfuttatása a szabályokon: kiértékelés + akciók végrehajtása.
+     * Runs the message through the rules: evaluation plus action execution.
      */
     public function process(Message $message): void
     {
@@ -86,7 +86,9 @@ class RuleEngine
 
                 if ($budget-- <= 0) {
                     $this->log($message, $rule, $action, ActionResult::skipped(
-                        'Akció-korlát elérve ('.config('webhookhub.max_actions_per_message').' akció/üzenet)'
+                        __('webhookhub.actions.limit_reached', [
+                            'limit' => config('webhookhub.max_actions_per_message'),
+                        ])
                     ), 0);
 
                     break 2;
@@ -126,7 +128,7 @@ class RuleEngine
         try {
             return $this->evaluator->evaluate($conditions, $context);
         } catch (Throwable $e) {
-            Log::warning('Szabály kiértékelése elszállt', ['rule' => $rule->id, 'error' => $e->getMessage()]);
+            Log::warning('Rule evaluation crashed', ['rule' => $rule->id, 'error' => $e->getMessage()]);
 
             return false;
         }
@@ -158,7 +160,7 @@ class RuleEngine
             'status' => $result->status,
             'summary' => $result->summary,
             'error' => $result->error,
-            // A kirenderelt HTML-t nem tesszük a naplóba, csak a lényeget.
+            // The rendered HTML stays out of the log; only the essentials go in.
             'detail' => collect($result->detail)->except('html')->all(),
             'duration_ms' => $durationMs,
         ]);

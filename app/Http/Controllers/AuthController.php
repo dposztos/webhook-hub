@@ -24,7 +24,7 @@ class AuthController extends Controller
 
         if (! Auth::attempt($credentials, $request->boolean('remember'))) {
             throw ValidationException::withMessages([
-                'email' => 'Hibás e-mail cím vagy jelszó.',
+                'email' => __('auth.failed'),
             ]);
         }
 

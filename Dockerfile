@@ -9,7 +9,7 @@ COPY vite.config.js ./
 COPY resources ./resources
 RUN npm run build
 
-# 2) PHP függőségek
+# 2) PHP dependencies
 FROM composer:2 AS vendor
 WORKDIR /build
 COPY composer.json composer.lock ./
@@ -17,7 +17,7 @@ RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist --ignor
 COPY . .
 RUN composer dump-autoload --optimize --no-dev
 
-# 3) Futtatókörnyezet: nginx + php-fpm egy konténerben, supervisord alatt
+# 3) Runtime: nginx + php-fpm in one container, under supervisord
 FROM php:8.4-fpm-alpine
 
 RUN apk add --no-cache nginx supervisor postgresql-dev icu-dev libzip-dev tzdata \
@@ -38,7 +38,7 @@ WORKDIR /app
 COPY --from=vendor /build /app
 COPY --from=assets /build/public/build /app/public/build
 
-# Külön mkdir-ek: az Alpine /bin/sh nem ismeri a {a,b} kifejezést.
+# Separate mkdirs: Alpine's /bin/sh does not understand {a,b} expansion.
 RUN rm -rf /app/docker/dev /app/php \
     && mkdir -p storage/framework/cache/data \
     && mkdir -p storage/framework/sessions \

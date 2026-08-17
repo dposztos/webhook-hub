@@ -40,7 +40,7 @@ class Message extends Model
     }
 
     /**
-     * Rövid előnézet a listához: az első pár mező a JSON-ból, vagy a nyers test eleje.
+     * Short preview for the list: the first few JSON fields, or the start of the raw body.
      */
     public function preview(int $limit = 140): string
     {

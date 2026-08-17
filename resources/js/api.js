@@ -1,3 +1,5 @@
+import { t } from './i18n';
+
 const csrf = () => document.querySelector('meta[name="csrf-token"]')?.content ?? '';
 
 class ApiError extends Error {
@@ -22,7 +24,7 @@ async function request(method, url, body) {
 
     if (response.status === 401 || response.status === 419) {
         window.location.href = '/login';
-        throw new ApiError('Lejárt a munkamenet.', response.status);
+        throw new ApiError(t('common.sessionExpired'), response.status);
     }
 
     const text = await response.text();
@@ -31,7 +33,7 @@ async function request(method, url, body) {
     if (!response.ok) {
         const errors = data?.errors ?? {};
         const first = Object.values(errors).flat()[0];
-        throw new ApiError(first ?? data?.message ?? `Hiba (${response.status})`, response.status, errors);
+        throw new ApiError(first ?? data?.message ?? t('common.httpError', { status: response.status }), response.status, errors);
     }
 
     return data;

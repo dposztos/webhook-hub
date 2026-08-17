@@ -14,8 +14,8 @@ use Illuminate\Http\Response;
 class MessageController extends Controller
 {
     /**
-     * Üzenetlista. Szűrhető endpointra vagy egy egész csoportra (az alcsoportokkal együtt),
-     * továbbá szabadszavas keresés a testben, URL-ben és a fejlécekben.
+     * Message list. Filterable by endpoint or by a whole group (subgroups
+     * included), plus free-text search over the body, URL and headers.
      */
     public function index(Request $request): JsonResponse
     {
@@ -92,7 +92,7 @@ class MessageController extends Controller
             ->where('uuid', $uuid)
             ->firstOrFail();
 
-        // A megnyitás olvasottnak jelöli az üzenetet.
+        // Opening a message marks it read.
         if (! $message->read_at) {
             $message->forceFill(['read_at' => now()])->save();
         }
@@ -162,7 +162,7 @@ class MessageController extends Controller
     }
 
     /**
-     * Egy endpoint összes üzenetének törlése.
+     * Delete every message of an endpoint.
      */
     public function clear(Endpoint $endpoint): JsonResponse
     {
@@ -173,7 +173,7 @@ class MessageController extends Controller
     }
 
     /**
-     * Olvasatlanná tétel (hogy vissza lehessen tenni a „megnézendő” közé).
+     * Mark unread again, to put it back on the "look at this" pile.
      */
     public function markUnread(string $uuid): JsonResponse
     {
@@ -184,7 +184,7 @@ class MessageController extends Controller
     }
 
     /**
-     * Egy endpoint (vagy egy egész csoport) összes üzenetének olvasottnak jelölése.
+     * Mark every message of an endpoint (or a whole group) as read.
      */
     public function markAllRead(Request $request): JsonResponse
     {
@@ -206,7 +206,7 @@ class MessageController extends Controller
     }
 
     /**
-     * Szabályok újrafuttatása egy már tárolt üzenetre (élesben, akciókkal együtt).
+     * Re-run the rules against a stored message — for real, actions included.
      */
     public function replay(string $uuid): JsonResponse
     {
