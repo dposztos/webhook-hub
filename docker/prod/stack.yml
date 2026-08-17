@@ -1,9 +1,10 @@
 # Portainer stack a webhook-hubhoz.
-# Az image-et a docker-proxy /build végpontján építjük (nincs registry),
-# ezért a stack csak hivatkozik rá: pullImage=false.
+# Az image a Gitea registryből jön (git.posztos.com/homelab/webhook-hub), a deploy
+# pullImage=true-val megy. Build: a docker-proxy /build végpontján, a cél-endpointon,
+# utána tag + push a registrybe.
 services:
   app:
-    image: webhook-hub:latest
+    image: git.posztos.com/homelab/webhook-hub:latest
     container_name: webhook-hub
     restart: unless-stopped
     ports:
