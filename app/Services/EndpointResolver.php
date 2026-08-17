@@ -9,7 +9,7 @@ use App\Models\Group;
  * Splits the incoming URL path into group chain / endpoint / secret / remainder.
  *
  * Example: "customers/acme/orders/k7f3q9x2mnpq/extra/path"
- *   → endpoint = "rendelesek" az "ugyfelek/abc123" csoportban, suffix = "extra/utvonal"
+ *   → endpoint "orders" in group "customers/acme", suffix "extra/path"
  */
 class EndpointResolver
 {

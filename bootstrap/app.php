@@ -24,8 +24,13 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->redirectGuestsTo('/login');
 
-        // We run behind a reverse proxy (nginx-proxy-manager / Cloudflare).
-        $middleware->trustProxies(at: '*');
+        // Which peers may set X-Forwarded-*. This decides both the IP stored on
+        // a message and who the per-IP rate limits actually apply to, so on a
+        // directly exposed instance narrow it to your proxy's address (or an
+        // empty value) instead of leaving it at '*'.
+        $proxies = env('TRUSTED_PROXIES', '*');
+
+        $middleware->trustProxies(at: $proxies === '*' ? '*' : array_filter(array_map('trim', explode(',', (string) $proxies))));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

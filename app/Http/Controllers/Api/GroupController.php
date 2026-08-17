@@ -144,7 +144,7 @@ class GroupController extends Controller
 
     private function uniqueSlug(string $name, ?int $parentId): string
     {
-        $base = Str::slug($name) ?: 'csoport';
+        $base = Str::slug($name) ?: 'group';
         $slug = $base;
         $i = 2;
 

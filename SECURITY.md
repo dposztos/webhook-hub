@@ -42,3 +42,8 @@ The following are known and accepted, and are **not** vulnerabilities:
 - The admin UI has no per-user permissions. Every logged-in user is an admin.
 - Running the app on plain HTTP with `SESSION_SECURE=false` exposes the session
   cookie. Use HTTPS for anything but local testing.
+- With the default `TRUSTED_PROXIES=*`, a client that reaches the app directly
+  can set `X-Forwarded-For` and so choose the IP recorded on its messages and
+  the bucket its rate limit counts against. That default exists because the
+  normal deployment is behind a reverse proxy; if yours is exposed directly,
+  set `TRUSTED_PROXIES` to your proxy's address or leave it empty.

@@ -142,18 +142,10 @@ class MessageRecorder
 
     private function clientIp(Request $request): ?string
     {
-        // Behind a reverse proxy (nginx-proxy-manager / Cloudflare) the real IP is in a header.
-        $forwarded = $request->header('CF-Connecting-IP')
-            ?? $request->header('X-Forwarded-For');
-
-        if ($forwarded) {
-            $first = trim(explode(',', $forwarded)[0]);
-
-            if (filter_var($first, FILTER_VALIDATE_IP)) {
-                return $first;
-            }
-        }
-
+        // Deliberately just $request->ip(). Reading X-Forwarded-For by hand would
+        // ignore the trusted-proxy configuration and let any direct client claim
+        // whatever address it likes; Laravel only honours the header when the
+        // peer is a trusted proxy (see TRUSTED_PROXIES in bootstrap/app.php).
         return $request->ip();
     }
 }
