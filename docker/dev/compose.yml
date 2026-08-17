@@ -1,0 +1,46 @@
+name: webhook-hub-dev
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: webhookhub
+      POSTGRES_USER: webhookhub
+      POSTGRES_PASSWORD: devpassword
+    ports:
+      - "127.0.0.1:55432:5432"
+    volumes:
+      - dev-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U webhookhub"]
+      interval: 5s
+      retries: 10
+
+  app:
+    image: webhook-hub:dev
+    build:
+      context: .
+    command: php artisan serve --host=0.0.0.0 --port=8000
+    working_dir: /app
+    user: "1000:1000"
+    volumes:
+      - ../../:/app
+    ports:
+      - "8090:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  worker:
+    image: webhook-hub:dev
+    command: php artisan queue:work --tries=3 --timeout=60 --sleep=1
+    working_dir: /app
+    user: "1000:1000"
+    volumes:
+      - ../../:/app
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  dev-db:
