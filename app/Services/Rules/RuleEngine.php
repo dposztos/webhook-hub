@@ -119,7 +119,7 @@ class RuleEngine
     }
 
     /**
-     * @param array<string, mixed> $context
+     * @param  array<string, mixed>  $context
      */
     public function matches(Rule $rule, array $context): bool
     {
@@ -135,7 +135,7 @@ class RuleEngine
     }
 
     /**
-     * @param array<string, mixed> $context
+     * @param  array<string, mixed>  $context
      */
     public function runAction(RuleAction $action, array $context, bool $dryRun = false): TimedActionResult
     {

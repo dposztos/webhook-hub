@@ -1,0 +1,60 @@
+name: Bug report
+description: Something behaves differently than it should
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please do not report security problems here — see
+        [SECURITY.md](../blob/master/SECURITY.md) for the private route.
+
+  - type: input
+    id: version
+    attributes:
+      label: Version or image tag
+      placeholder: "ghcr.io/cactuska/webhook-hub:latest, or a commit SHA"
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what you got instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: How to reproduce
+      description: |
+        The request you sent is usually the key part. Copy it from the message's
+        **Send** tab if you can — with anything sensitive removed.
+      placeholder: |
+        1. Create an endpoint under …
+        2. POST this body to it …
+        3. The message list shows …
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: How you run it, and anything unusual in front of it.
+      placeholder: |
+        Docker Compose / Portainer / bare metal
+        Behind: nginx-proxy-manager, Cloudflare, …
+        Postgres version:
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: "`docker compose logs app`, with secrets removed."
+      render: shell
+    validations:
+      required: false

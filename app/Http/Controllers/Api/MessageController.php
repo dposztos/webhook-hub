@@ -52,7 +52,7 @@ class MessageController extends Controller
         }
 
         match ($request->input('only')) {
-            'matched' => $query->whereRaw("jsonb_array_length(matched_rules) > 0"),
+            'matched' => $query->whereRaw('jsonb_array_length(matched_rules) > 0'),
             'failed' => $query->where('actions_failed', '>', 0),
             'unprocessed' => $query->whereNull('processed_at'),
             'unread' => $query->whereNull('read_at'),

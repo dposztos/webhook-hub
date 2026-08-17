@@ -7,6 +7,7 @@ use App\Models\Endpoint;
 use App\Models\Group;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -120,8 +121,8 @@ class GroupController extends Controller
     }
 
     /**
-     * @param \Illuminate\Support\Collection<int, Endpoint> $endpoints
-     * @param \Illuminate\Support\Collection<int|string, int> $rulesByEndpoint
+     * @param  Collection<int, Endpoint>  $endpoints
+     * @param  Collection<int|string, int>  $rulesByEndpoint
      * @return array<int, array<string, mixed>>
      */
     private function endpointPayload($endpoints, $rulesByEndpoint, $unread = null): array

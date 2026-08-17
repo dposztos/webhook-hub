@@ -101,7 +101,7 @@ class EmailAction implements ActionContract
     /**
      * Renders the recipient template and keeps only the valid e-mail addresses.
      *
-     * @param array<string, mixed> $context
+     * @param  array<string, mixed>  $context
      * @return array<int, string>
      */
     private function addresses(string $template, array $context): array
@@ -117,7 +117,7 @@ class EmailAction implements ActionContract
     }
 
     /**
-     * @param array<int, string> $recipients
+     * @param  array<int, string>  $recipients
      * @return array<int, string>
      */
     private function blockedRecipients(array $recipients): array

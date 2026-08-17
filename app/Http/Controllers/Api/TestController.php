@@ -115,7 +115,7 @@ class TestController extends Controller
      * Clickable variable suggestions derived from the captured message:
      * ready-made references shaped like "json.order.items.0.sku".
      *
-     * @param array<string, mixed> $context
+     * @param  array<string, mixed>  $context
      * @return array<int, array<string, mixed>>
      */
     private function suggestions(array $context): array

@@ -5,7 +5,7 @@ namespace App\Services\Actions;
 class ActionResult
 {
     /**
-     * @param array<string, mixed> $detail
+     * @param  array<string, mixed>  $detail
      */
     private function __construct(
         public readonly string $status,

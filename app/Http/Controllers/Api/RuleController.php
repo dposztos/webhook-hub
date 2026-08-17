@@ -113,7 +113,7 @@ class RuleController extends Controller
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
     private function ruleAttributes(array $data): array
@@ -131,7 +131,7 @@ class RuleController extends Controller
     }
 
     /**
-     * @param array<int, array<string, mixed>> $actions
+     * @param  array<int, array<string, mixed>>  $actions
      */
     private function syncActions(Rule $rule, array $actions): void
     {

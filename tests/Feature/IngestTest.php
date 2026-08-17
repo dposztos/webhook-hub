@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Endpoint;
 use App\Models\Group;
 use App\Models\Message;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -75,7 +76,7 @@ class IngestTest extends TestCase
     public function test_deleting_a_message_restores_the_counter(): void
     {
         $endpoint = $this->endpoint();
-        $user = \App\Models\User::factory()->create();
+        $user = User::factory()->create();
 
         $this->post("/u/customers/acme/orders/{$endpoint->secret}", ['a' => 1]);
         $this->post("/u/customers/acme/orders/{$endpoint->secret}", ['a' => 2]);

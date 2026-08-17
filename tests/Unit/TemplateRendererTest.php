@@ -59,7 +59,7 @@ class TemplateRendererTest extends TestCase
         $this->assertSame('24 990 Ft', $this->renderer->renderHtml('{{ json.total|huf }}', $this->context));
         $this->assertSame(
             '2026.08.14. 10:00',
-            $this->renderer->renderHtml("{{ meta.received_at_local|hu_date }}", $this->context)
+            $this->renderer->renderHtml('{{ meta.received_at_local|hu_date }}', $this->context)
         );
     }
 

@@ -30,8 +30,8 @@ class ConditionEvaluator
     public function __construct(private readonly ValueResolver $resolver = new ValueResolver) {}
 
     /**
-     * @param array<string, mixed> $node
-     * @param array<string, mixed> $context
+     * @param  array<string, mixed>  $node
+     * @param  array<string, mixed>  $context
      */
     public function evaluate(array $node, array $context): bool
     {
@@ -47,8 +47,8 @@ class ConditionEvaluator
     }
 
     /**
-     * @param array<string, mixed> $node
-     * @param array<string, mixed> $context
+     * @param  array<string, mixed>  $node
+     * @param  array<string, mixed>  $context
      */
     private function node(array $node, array $context, int $depth = 0): bool
     {
@@ -65,8 +65,8 @@ class ConditionEvaluator
     }
 
     /**
-     * @param array<string, mixed> $node
-     * @param array<string, mixed> $context
+     * @param  array<string, mixed>  $node
+     * @param  array<string, mixed>  $context
      */
     private function group(array $node, array $context, int $depth): bool
     {
@@ -97,8 +97,8 @@ class ConditionEvaluator
     }
 
     /**
-     * @param array<string, mixed> $node
-     * @param array<string, mixed> $context
+     * @param  array<string, mixed>  $node
+     * @param  array<string, mixed>  $context
      */
     private function condition(array $node, array $context): bool
     {

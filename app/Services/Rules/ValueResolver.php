@@ -18,7 +18,7 @@ class ValueResolver
     private const MISSING = "\0__missing__\0";
 
     /**
-     * @param array<string, mixed> $context
+     * @param  array<string, mixed>  $context
      */
     public function resolve(array $context, string $source, string $path): mixed
     {
@@ -28,7 +28,7 @@ class ValueResolver
     }
 
     /**
-     * @param array<string, mixed> $context
+     * @param  array<string, mixed>  $context
      */
     public function exists(array $context, string $source, string $path): bool
     {
@@ -36,7 +36,7 @@ class ValueResolver
     }
 
     /**
-     * @param array<string, mixed> $context
+     * @param  array<string, mixed>  $context
      */
     private function raw(array $context, string $source, string $path): mixed
     {

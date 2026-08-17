@@ -1,117 +1,166 @@
 # Webhook Hub
 
-Saját üzemeltetésű webhook-gyűjtő és -automatizáló. A [webhook.site](https://github.com/fredsted/webhook.site)
-MIT-licencű OSS változatából indult fork, de mára önálló alkalmazás: Laravel 12 + PostgreSQL + Vue 3.
-A fork eredeti állapota az `upstream-master` ágon maradt meg.
+*[Magyar leírás](README.hu.md)*
 
-Amit az eredeti nyílt verzió nem tudott, és itt megvan:
+A self-hosted webhook receiver that keeps your messages, organises them in a
+tree, and can act on what arrives.
 
-- **Csoport-hierarchia**: tetszőleges mélységű fa (pl. `Ügyfelek / ABC Kft. / Rendelések`), csoportonként
-  akárhány URL. Minden URL külön endpoint, saját beállításokkal.
-- **Minden üzenet megmarad**: nincs 500 kérés/URL korlát és nincs 7 napos lejárat. A megőrzés
-  endpointonként korlátozható, ha valamit mégis takarítani kell.
-- **Olvasatlan jelölés**: az új üzenet olvasatlan (kék jelölés a listán, számláló a fában a
-  csoportokra összesítve is); a megnyitás olvasottnak jelöli, és van „mind olvasott" meg
-  „vissza olvasatlanra" is.
-- **Újraküldés bármivel**: minden üzenetnél ott a kész parancs curl, PowerShell, HTTPie, Python,
-  JavaScript és nyers HTTP formában — az endpoint aktuális címére, a proxy-fejlécek nélkül.
-- **Szabályok és akciók**: a beérkezett JSON mezőire (fejlécekre, query-paraméterekre) épülő,
-  egymásba ágyazható ÉS/VAGY feltételek, és rájuk kötött akciók. Jelenleg: e-mail küldése HTML-sablonnal,
-  a beérkezett adatokra hivatkozó változókkal.
+It began as a fork of the MIT-licensed open-source [webhook.site](https://github.com/fredsted/webhook.site),
+but it is its own application now: Laravel 12 + PostgreSQL + Vue 3. The original
+state of the fork is preserved on the `upstream-master` branch.
 
-## Az URL-ek felépítése
+What the open-source original could not do, and this can:
+
+- **A group hierarchy.** A tree of arbitrary depth (`Customers / ACME Ltd. /
+  Orders`), with any number of URLs per group. Every URL is a separate endpoint
+  with its own settings.
+- **Every message is kept.** No 500-request cap per URL and no 7-day expiry.
+  Retention can be limited per endpoint if you do want something cleaned up.
+- **Unread tracking.** A new message arrives unread — blue marker in the list, a
+  counter in the tree that also sums onto the groups. Opening it marks it read,
+  and there is both "mark all read" and "put back to unread".
+- **Replay with anything.** Every message comes with a ready-to-run command for
+  curl, PowerShell, HTTPie, Python, JavaScript and raw HTTP — aimed at the
+  endpoint's current address, without the proxy headers.
+- **Rules and actions.** Nestable AND/OR conditions over the parsed body,
+  headers and query parameters, with actions bound to them. Currently: sending
+  an e-mail from an HTML template with variables referencing the captured data.
+
+## Try it
+
+```bash
+git clone https://github.com/cactuska/webhook-hub.git
+cd webhook-hub
+cp .env.example .env
+# put the printed key into APP_KEY, and set DB_PASSWORD, ADMIN_EMAIL, ADMIN_PASSWORD
+docker compose run --rm app php artisan key:generate --show
+docker compose up -d
+```
+
+The UI is then on <http://localhost:8080>. Sign in with the `ADMIN_EMAIL` /
+`ADMIN_PASSWORD` from your `.env` — there is no public sign-up.
+
+Prebuilt images: `ghcr.io/cactuska/webhook-hub:latest` and
+`dposztos/webhook-hub:latest`.
+
+## How the URLs are built
 
 ```
-https://<host>/u/<csoport>/<alcsoport>/<endpoint>/<titok>[/<tetszőleges folytatás>]
-                └──────── a fa útvonala ────────┘  └ 12 karakter, cserélhető
+https://<host>/u/<group>/<subgroup>/<endpoint>/<secret>[/<anything>]
+               └──────── path in the tree ────────┘  └ 12 chars, rotatable
 ```
 
-Példa: `https://webhook.posztos.com/u/ugyfelek/abc-kft/rendelesek/k7f3q9x2mnpq`
+Example: `https://webhooks.example.com/u/customers/acme/orders/k7f3q9x2mnpq`
 
-- Az útvonalból leolvasható, melyik ügyfél melyik folyamata küld — de a titok nélkül nem kitalálható.
-- A titok cserélhető a felületen (**Beállítások → Új titok**); ilyenkor a régi URL azonnal 404-et ad.
-- Bármi ráfűzhető a végére (a rendszer eltárolja), és a `/404`-hez hasonló záró szegmens felülírja a
-  visszaadott státuszkódot.
-- Átnevezés **nem** változtatja meg az URL-t: az útvonalat a slug adja, ami a létrehozáskor rögzül.
+- The path shows which customer's which process is sending — but without the
+  secret it cannot be guessed.
+- The secret is rotatable in the UI (**Settings → New secret**); the old URL
+  starts returning 404 immediately.
+- Anything can be appended (it gets stored), and a trailing segment such as
+  `/404` overrides the returned status code.
+- Renaming does **not** change the URL: the path comes from the slug, which is
+  fixed at creation.
 
-## Szabályok
+## Rules
 
-Egy szabály vagy egy endpointhoz, vagy egy csoporthoz tartozik. A **csoportra tett szabály az alatta lévő
-összes endpointra lefut** — így pl. „minden ABC Kft.-s hibás státusz esetén szólj” egy helyen megírható.
-A szabályok prioritás szerint futnak; a `stop_processing` bekapcsolásával egy találat lezárja a sort.
+A rule belongs either to an endpoint or to a group. **A rule on a group runs for
+every endpoint below it** — so "notify me on any failed status from ACME" is
+written once. Rules run in priority order; turning on `stop_processing` makes a
+match end the chain.
 
-Feltétel-források: `json` (a feldolgozott test – JSON, form-urlencoded és multipart is), `header`,
-`query`, `meta` (method, ip, url, size, content_type…), `body` (nyers szöveg).
+Condition sources: `json` (the parsed body — JSON, form-urlencoded and multipart
+alike), `header`, `query`, `meta` (method, ip, url, size, content_type…), `body`
+(raw text).
 
-Mezőhivatkozás pont-jelöléssel: `order.items.0.sku`, illetve `order.items.*.sku` az összes elemre.
+Field references use dot notation: `order.items.0.sku`, or `order.items.*.sku`
+for every element.
 
-Operátorok: `equals`, `not_equals`, `contains`, `not_contains`, `starts_with`, `ends_with`, `regex`,
-`not_regex`, `gt`, `gte`, `lt`, `lte`, `in`, `not_in`, `exists`, `not_exists`, `is_empty`, `is_not_empty`,
-`is_true`, `is_false`. A számokat számként hasonlítja (a `"1 234"` alakot is), dátumot időbélyegként.
+Operators: `equals`, `not_equals`, `contains`, `not_contains`, `starts_with`,
+`ends_with`, `regex`, `not_regex`, `gt`, `gte`, `lt`, `lte`, `in`, `not_in`,
+`exists`, `not_exists`, `is_empty`, `is_not_empty`, `is_true`, `is_false`.
+Numbers compare as numbers (including the `"1 234"` form), dates as timestamps.
 
-A szerkesztőben a **Kipróbálás a legutóbbi üzeneten** gomb megmutatja, illeszkedne-e a szabály, és
-feltételenként kiírja, mi lett az eredmény.
+The **Try it on the latest message** button in the editor shows whether the rule
+would match, and reports the outcome of each condition separately.
 
-## E-mail sablonok
+## E-mail templates
 
-A tárgy és a törzs [Twig](https://twig.symfony.com/) sablon, **homokozóban** futtatva: csak engedélyezett
-tagek és szűrők mennek, függvény- és metódushívás nincs, a beérkezett adatok HTML-escape-elve kerülnek be.
+The subject and the body are [Twig](https://twig.symfony.com/) templates run in
+a **sandbox**: only allow-listed tags and filters, no function or method calls,
+and the captured data is HTML-escaped on the way in.
 
 ```twig
 <style>.total { font-size: 20px; font-weight: 700; color: #2563eb }</style>
 
-<h2>Köszönjük a rendelést, {{ json.customer.name|default('Kedves Ügyfél') }}!</h2>
-<p>Azonosító: <strong>{{ json.order.id }}</strong></p>
-<p class="total">{{ json.order.total|huf }}</p>
+<h2>Thanks for your order, {{ json.customer.name|default('there') }}!</h2>
+<p>Reference: <strong>{{ json.order.id }}</strong></p>
+<p class="total">{{ json.order.total|money }}</p>
 
-{% for tetel in json.order.items %}
-  <p>{{ tetel.sku }} – {{ tetel.db }} db</p>
+{% for item in json.order.items %}
+  <p>{{ item.sku }} — {{ item.qty }} pcs</p>
 {% endfor %}
 
 {{ json|table }}
-<p>Beérkezett: {{ meta.received_at_hu }}</p>
+<p>Received: {{ meta.received_at_local }}</p>
 ```
 
-Elérhető változók: `json`, `body`, `headers`, `query`, `meta`, `endpoint`, `group`.
-Saját szűrők: `huf` (24990 → „24 990 Ft”), `table` (tömb → HTML-táblázat), `json_pretty`, `hu_date`.
-A `<style>` blokk küldés előtt inline stílusokká alakul, hogy a levelezőkliensek is helyesen mutassák.
+Available variables: `json`, `body`, `headers`, `query`, `meta`, `endpoint`,
+`group`. Custom filters: `money` (24990 → "24,990", configurable), `table`
+(array → HTML table), `json_pretty`, `local_date`. The `<style>` block is
+inlined before sending so mail clients render it correctly.
 
-A címzett is sablon lehet: `{{ json.customer.email }}, iroda@ceg.hu`. Az érvénytelen címeket a rendszer
-kiszűri; ha nem marad egy sem, az akció hibás státusszal kerül a naplóba (a beérkezett üzenet megmarad).
+The recipient can be a template too: `{{ json.customer.email }}, ops@example.com`.
+Invalid addresses are dropped; if none survive, the action is logged as failed
+(the captured message is still kept).
 
-## Fejlesztés
+## Configuration
 
-Nincs szükség helyi PHP-ra, minden konténerben fut:
+| Variable | Meaning |
+| --- | --- |
+| `APP_URL` | Webhook URLs are generated with this host |
+| `APP_LOCALE` | UI and e-mail language (`en`, `hu`) |
+| `SESSION_SECURE` | `true` behind HTTPS, `false` for plain HTTP (otherwise login silently fails) |
+| `WEBHOOK_MAX_BODY_BYTES` | Bodies larger than this are stored truncated, with a marker |
+| `WEBHOOK_INGEST_RATE_LIMIT` | Incoming requests per minute per IP (0 = unlimited) |
+| `WEBHOOK_RETENTION_DAYS` | Global default retention; empty = forever |
+| `WEBHOOK_ALLOWED_RECIPIENTS` | If set, actions may only mail addresses matching these patterns |
+| `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Admin created (or updated) on start |
+
+See [`.env.example`](.env.example) for the full list.
+
+## Deployment
+
+The `Dockerfile` has three stages: Vite build → composer install → runtime
+(nginx + php-fpm under supervisord, which also runs the queue worker and the
+scheduler). Migrations run on start, and the admin user is created or updated
+when `ADMIN_EMAIL`/`ADMIN_PASSWORD` are set.
+
+`docker/prod/stack.yml` is the same thing as a Portainer stack.
+
+## Development
+
+No local PHP needed — everything runs in containers:
 
 ```bash
 docker compose -f docker/dev/compose.yml up -d      # Postgres + app (:8090) + queue worker
-./php php artisan migrate                            # artisan a konténerben
-./php php artisan db:seed --class=DemoSeeder         # példa csoport + endpoint + szabály
-./php php artisan webhook:admin te@pelda.hu --password=…
+./php php artisan migrate                            # artisan inside the container
+./php php artisan db:seed --class=DemoSeeder         # sample group + endpoint + rule
+./php php artisan webhook:admin you@example.com --password=…
 npm install && npm run build                         # frontend
-./php php artisan test                               # tesztek
+./php php artisan test                               # tests
 ```
 
-## Telepítés
+## Contributing
 
-A `Dockerfile` háromlépcsős: Vite build → composer install → futtatókörnyezet (nginx + php-fpm +
-supervisord, ami a queue workert és az ütemezőt is viszi). Az induláskor lefut a migráció, és ha az
-`ADMIN_EMAIL`/`ADMIN_PASSWORD` be van állítva, létrejön (vagy frissül) az admin felhasználó.
+Bug reports, ideas and pull requests are welcome — see
+[CONTRIBUTING.md](CONTRIBUTING.md). **Translations especially**: adding a
+language means copying `lang/en.json` and `lang/en/`, translating the values,
+and nothing else.
 
-A `docker/prod/stack.yml` a Portainer-stack: app + Postgres névvel ellátott kötetben.
+Security issues go through GitHub's private vulnerability reporting rather than
+a public issue; [SECURITY.md](SECURITY.md) describes the scope and what is
+explicitly out of it.
 
-Fontosabb környezeti változók:
+## Licence
 
-| Változó | Jelentés |
-| --- | --- |
-| `APP_URL` | Ezzel a hosttal generálódnak a webhook-URL-ek |
-| `SESSION_SECURE` | HTTPS mögött `true`, sima HTTP-s eléréshez `false` (különben nem megy a belépés) |
-| `WEBHOOK_MAX_BODY_BYTES` | Ekkora méretig tároljuk a testet (fölötte csonkolva, jelzéssel) |
-| `WEBHOOK_INGEST_RATE_LIMIT` | Beérkező kérés / perc / IP (0 = korlátlan) |
-| `WEBHOOK_RETENTION_DAYS` | Globális alapértelmezett megőrzés; üresen: örökre |
-| `WEBHOOK_ALLOWED_RECIPIENTS` | Ha kitöltöd, csak ezekre a mintákra illeszkedő címre megy levél |
-| `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Induláskor létrehozandó/frissítendő admin |
-
-## Licenc
-
-MIT – az eredeti webhook.site projekt licencét megtartva (lásd `LICENSE`).
+MIT, keeping the original webhook.site licence — see [LICENSE](LICENSE).

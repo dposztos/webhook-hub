@@ -8,7 +8,7 @@ namespace App\Services\Rules;
 class ConditionValidator
 {
     /**
-     * @param array<string, mixed> $node
+     * @param  array<string, mixed>  $node
      * @return array<int, string> error messages (empty array = valid)
      */
     public function validate(array $node, int $depth = 0, ?string $path = null): array

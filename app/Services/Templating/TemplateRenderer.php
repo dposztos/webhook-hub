@@ -22,7 +22,7 @@ class TemplateRenderer
     private ?Environment $text = null;
 
     /**
-     * @param array<string, mixed> $context
+     * @param  array<string, mixed>  $context
      */
     public function renderHtml(string $template, array $context): string
     {
@@ -32,7 +32,7 @@ class TemplateRenderer
     /**
      * Single-line fields (subject, recipient) — no HTML escaping wanted here.
      *
-     * @param array<string, mixed> $context
+     * @param  array<string, mixed>  $context
      */
     public function renderText(string $template, array $context): string
     {
@@ -40,7 +40,7 @@ class TemplateRenderer
     }
 
     /**
-     * @param array<string, mixed> $context
+     * @param  array<string, mixed>  $context
      *
      * @throws TemplateException
      */
