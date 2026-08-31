@@ -7,7 +7,15 @@ COPY package.json package-lock.json ./
 RUN npm ci
 COPY vite.config.js ./
 COPY resources ./resources
-RUN npm run build
+# The UI catalogs. resources/js/i18n.js globs ../../lang/*.json at build time,
+# so without this the bundle ships with no translations at all and every label
+# renders as its own key ("tree.promptRootGroup"). Nothing fails while building;
+# the check below is what turns that silence into a broken build.
+COPY lang ./lang
+RUN npm run build \
+    && grep -q 'Groups and URLs' public/build/assets/*.js \
+    && grep -q 'Csoportok' public/build/assets/*.js \
+    || { echo 'the language catalogs did not reach the bundle — is lang/ in the build context?' >&2; exit 1; }
 
 # 2) PHP dependencies
 FROM composer:2 AS vendor
