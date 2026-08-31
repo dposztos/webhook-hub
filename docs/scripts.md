@@ -109,6 +109,44 @@ Add libraries by building a small image on top of the published one;
 
 The DB2 variant already carries `pyodbc`.
 
+## Chaining steps
+
+The actions of one rule run in order, and each one's result is put into the
+context under `steps`, so a later action can use what an earlier one produced. A
+script that queries a database and an e-mail that reports the answer are two
+steps, not one script that also sends mail:
+
+```twig
+{{ steps.query.output.total|money }}
+{% for row in steps.query.output.rows %}
+  {{ row.name }}
+{% endfor %}
+```
+
+A step is addressed by its **action name**, lowercased and underscored
+(`Lekérdezés` → `lekerdezes`), or by `step_1`, `step_2`… when it has no name. Two
+steps with the same name get a `_2` suffix rather than silently overwriting each
+other. Each step carries:
+
+| field | what it holds |
+| --- | --- |
+| `output` | the JSON the script printed on stdout, parsed; `null` if it printed something else |
+| `stdout` | the raw output, truncated at the output limit |
+| `status` | `success`, `failed` or `skipped` |
+| `exit_code`, `error` | for a step that failed |
+
+`steps` starts empty for every rule, so a rule never sees another rule's steps —
+what a rule does stays reproducible on its own.
+
+**A failed step does not stop the ones after it** by default: an e-mail that
+follows a broken query would go out carrying nothing. Tick *only if the previous
+step succeeded* on the later action to prevent that; it is then recorded as
+skipped, with the reason.
+
+Testing a single action from the editor renders `steps` as empty — there are no
+earlier steps in a one-action dry run. Send a webhook to the endpoint to see the
+whole chain.
+
 ## Testing a rule
 
 The editor has **Dry run**, which resolves the script and the arguments without

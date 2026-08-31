@@ -12,6 +12,7 @@ use App\Services\Actions\ActionResult;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Throwable;
 
 class RuleEngine
@@ -79,7 +80,15 @@ class RuleEngine
                 'last_matched_at' => now(),
             ]);
 
-            foreach ($rule->actions as $action) {
+            // Actions of one rule form a chain: each one's result is added to the
+            // context under "steps", so a later action's templates can use what an
+            // earlier one produced. It starts empty for every rule, so a rule never
+            // depends on which rules happened to run before it.
+            $actionContext = $context;
+            $actionContext['steps'] = [];
+            $previous = null;
+
+            foreach ($rule->actions as $position => $action) {
                 if (! $action->enabled) {
                     continue;
                 }
@@ -94,13 +103,31 @@ class RuleEngine
                     break 2;
                 }
 
-                $timed = $this->runAction($action, $context);
+                if (($action->config['only_if_previous_succeeded'] ?? false) && $previous !== 'success') {
+                    // Without this an e-mail built from a query that failed would
+                    // still go out, carrying nothing.
+                    $result = ActionResult::skipped(__('webhookhub.actions.previous_failed', [
+                        'status' => $previous ?? __('webhookhub.actions.no_previous'),
+                    ]));
+
+                    $actionContext['steps'][$this->stepKey($action, $position, $actionContext['steps'])] = $this->stepValue($result);
+                    $previous = $result->status;
+
+                    $this->log($message, $rule, $action, $result, 0);
+
+                    continue;
+                }
+
+                $timed = $this->runAction($action, $actionContext);
 
                 match ($timed->status()) {
                     'success' => $ok++,
                     'failed' => $failed++,
                     default => null,
                 };
+
+                $actionContext['steps'][$this->stepKey($action, $position, $actionContext['steps'])] = $this->stepValue($timed->result);
+                $previous = $timed->status();
 
                 $this->log($message, $rule, $action, $timed->result, $timed->durationMs);
             }
@@ -148,6 +175,50 @@ class RuleEngine
         }
 
         return new TimedActionResult($result, (int) round((microtime(true) - $started) * 1000));
+    }
+
+    /**
+     * The name a step is addressed by in a template: the action's own name,
+     * lowercased and underscored, or "step_1" when it has none. A repeated name
+     * gets a numeric suffix rather than quietly overwriting the earlier step.
+     *
+     * @param  array<string, mixed>  $steps
+     */
+    private function stepKey(RuleAction $action, int $position, array $steps): string
+    {
+        $name = Str::slug((string) ($action->name ?? ''), '_');
+        $key = $name !== '' ? $name : 'step_'.($position + 1);
+
+        if (! array_key_exists($key, $steps)) {
+            return $key;
+        }
+
+        $suffix = 2;
+
+        while (array_key_exists($key.'_'.$suffix, $steps)) {
+            $suffix++;
+        }
+
+        return $key.'_'.$suffix;
+    }
+
+    /**
+     * What a later step sees of an earlier one. "output" is the parsed JSON a
+     * script printed; everything else is there so a template can tell what
+     * happened without having to parse a summary sentence.
+     *
+     * @return array<string, mixed>
+     */
+    private function stepValue(ActionResult $result): array
+    {
+        return [
+            'status' => $result->status,
+            'summary' => $result->summary,
+            'error' => $result->error,
+            'output' => $result->detail['output_json'] ?? null,
+            'stdout' => $result->detail['stdout'] ?? null,
+            'exit_code' => $result->detail['exit_code'] ?? null,
+        ];
     }
 
     private function log(Message $message, Rule $rule, RuleAction $action, ActionResult $result, int $durationMs): void

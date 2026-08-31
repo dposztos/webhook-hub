@@ -40,6 +40,8 @@ return [
         'unknown_type' => 'Unknown action type: :type',
         'limit_reached' => 'Action limit reached (:limit actions per message)',
         'rule_failed' => 'Rule evaluation crashed',
+        'previous_failed' => 'Skipped: the previous step ended as :status',
+        'no_previous' => 'no previous step',
     ],
 
     'email' => [

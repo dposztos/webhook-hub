@@ -168,6 +168,9 @@
     "rules.addEmailAction": "+ E-mail akció",
     "rules.noActions": "Még nincs akció.",
     "rules.emailAction": "E-mail",
+    "actions.onlyIfPrevious": "csak ha az előző lépés sikeres volt",
+    "actions.onlyIfPreviousTitle": "Kihagyja ezt az akciót, ha az előtte lévő lépés hibára futott vagy kimaradt",
+    "actions.stepName": "A lépés neve sablonban: {key}",
     "rules.addScriptAction": "+ Python szkript",
     "rules.scriptAction": "Python szkript",
 

@@ -40,6 +40,8 @@ return [
         'unknown_type' => 'Ismeretlen akció-típus: :type',
         'limit_reached' => 'Akció-korlát elérve (:limit akció/üzenet)',
         'rule_failed' => 'Szabály kiértékelése elszállt',
+        'previous_failed' => 'Kihagyva: az előző lépés :status állapotban zárult',
+        'no_previous' => 'nincs előző lépés',
     ],
 
     'email' => [

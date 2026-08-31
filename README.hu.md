@@ -141,6 +141,10 @@ Az egész funkció ki van kapcsolva, amíg be nem állítod a
 `WEBHOOK_SCRIPTS_ENABLED=true`-t: ez kódfuttatás a szerveren, az admin felületről
 vezérelve.
 
+Egy szabály akciói láncot alkotnak: amit a szkript JSON-ként kiír, az
+`steps.<név>.output` néven bekerül a kontextusba, így az utána következő e-mail
+már abból dolgozik — nem a szkriptnek kell levelet küldenie.
+
 Részletek, korlátok és a biztonsági mérlegelés: [docs/scripts.md](docs/scripts.md).
 IBM i (AS/400) lekérdezése ODBC-n keresztül: [docs/as400.md](docs/as400.md).
 

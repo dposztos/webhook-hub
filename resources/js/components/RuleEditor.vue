@@ -164,6 +164,7 @@ const save = async () => {
                         v-for="(action, index) in form.actions"
                         :key="index"
                         :action="action"
+                        :index="index"
                         :sample-message="sampleMessage"
                         @update="form.actions[index] = $event"
                         @remove="form.actions.splice(index, 1)"

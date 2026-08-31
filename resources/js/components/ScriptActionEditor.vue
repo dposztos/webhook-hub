@@ -6,6 +6,20 @@ import { t } from '../i18n';
 const props = defineProps({
     action: { type: Object, required: true },
     sampleMessage: { type: String, default: null },
+    index: { type: Number, default: 0 },
+});
+
+// The same key the engine derives server-side, so the hint matches reality:
+// the action's name slugified, or "step_<n>" when it has none.
+const stepKey = computed(() => {
+    const slug = (props.action.name ?? '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '_')
+        .replace(/^_+|_+$/g, '');
+
+    return slug || `step_${props.index + 1}`;
 });
 
 const emit = defineEmits(['update', 'remove', 'notify']);
@@ -73,6 +87,19 @@ const run = async (live) => {
                 />
                 {{ $t('rules.active') }}
             </label>
+            <label
+                class="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400"
+                :title="$t('actions.onlyIfPreviousTitle')"
+            >
+                <input
+                    type="checkbox"
+                    :checked="!!action.config.only_if_previous_succeeded"
+                    class="rounded border-slate-300 dark:border-slate-700"
+                    @change="patch({ only_if_previous_succeeded: $event.target.checked })"
+                />
+                {{ $t('actions.onlyIfPrevious') }}
+            </label>
+            <span class="text-xs text-slate-400 dark:text-slate-600">{{ $t('actions.stepName', { key: stepKey }) }}</span>
             <button class="ml-auto btn-danger text-xs" @click="emit('remove')">{{ $t('email.removeAction') }}</button>
         </div>
 

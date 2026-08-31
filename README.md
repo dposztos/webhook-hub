@@ -132,6 +132,10 @@ there can run; a rule may also carry its own inline code once that is separately
 allowed. The whole feature is off until you set `WEBHOOK_SCRIPTS_ENABLED=true` —
 it is code execution on your server, driven from the admin UI.
 
+The actions of a rule form a chain: what a script prints as JSON lands in the
+context as `steps.<name>.output`, so the e-mail after it can report the answer
+instead of the script having to send mail itself.
+
 Details, guard rails and the security trade-offs: [docs/scripts.md](docs/scripts.md).
 Querying an IBM i (AS/400) over ODBC from a script: [docs/as400.md](docs/as400.md).
 
