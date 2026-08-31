@@ -1,21 +1,30 @@
-# Optional: the published image plus the Python libraries your scripts import.
+# Extra Python libraries for script actions.
 #
-#   docker build -f docker/prod/Dockerfile.scripts -t webhook-hub:scripts .
+#   docker build -f docker/prod/Dockerfile.scripts -t webhook-hub:db2-extra .
+#   # then in .env:  APP_IMAGE=webhook-hub:db2-extra
 #
-# then point the "app" service at webhook-hub:scripts instead of the ghcr.io
-# image. The base image ships a bare python3, which covers the standard library
-# (json, urllib, csv, sqlite3, smtplib); anything beyond that is added here.
-FROM ghcr.io/dposztos/webhook-hub:latest
+# Start from whichever image you run: the DB2 one below, or the default image
+# for a deployment with no AS/400. Both ship a bare python3 — the standard
+# library only (json, urllib, csv, sqlite3, smtplib) — and neither has pip.
+FROM ghcr.io/dposztos/webhook-hub:db2
 
 USER root
 
-# Alpine packages are preferred over pip: they are prebuilt, so there is no
-# compiler in the image. `apk search py3-<name>` lists what is available.
-RUN apk add --no-cache py3-requests
+# Route 1: Debian packages. Prebuilt, no compiler in the image, no PEP 668
+# argument to have. `apt-cache search '^python3-'` lists what is available.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends python3-requests \
+    && rm -rf /var/lib/apt/lists/*
 
-# For a library with no Alpine package, install it into a virtualenv and set
-# WEBHOOK_PYTHON_BIN=/opt/venv/bin/python3 on the service:
+# Route 2: pip, for anything Debian does not package. It has to go into a
+# virtualenv: Debian marks the system interpreter externally managed, so pip
+# refuses to touch it, and the image ships neither pip nor the venv module.
+# Point the app at this interpreter with WEBHOOK_PYTHON_BIN=/opt/venv/bin/python3
+# — it can still import the system packages thanks to --system-site-packages,
+# so pyodbc and the AS/400 helper keep working.
 #
-# RUN apk add --no-cache py3-pip \
-#     && python3 -m venv /opt/venv \
-#     && /opt/venv/bin/pip install --no-cache-dir pyodbc openpyxl
+# RUN apt-get update \
+#     && apt-get install -y --no-install-recommends python3-venv python3-pip \
+#     && python3 -m venv --system-site-packages /opt/venv \
+#     && /opt/venv/bin/pip install --no-cache-dir openpyxl \
+#     && rm -rf /var/lib/apt/lists/* /root/.cache

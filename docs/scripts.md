@@ -94,9 +94,20 @@ sys.exit(0)
 ## Python libraries
 
 The image ships a bare `python3`: the standard library (`json`, `urllib`, `csv`,
-`sqlite3`, `smtplib`) and nothing else. For more, build a small image on top of
-the published one — `docker/prod/Dockerfile.scripts` is a template — or use the
-DB2 variant, which already carries `pyodbc`.
+`sqlite3`, `smtplib`) and nothing else. There is no `pip` in it, and Debian marks
+the system interpreter externally managed, so nothing can be installed into a
+running container — by design, since a container is meant to be replaceable.
+
+Add libraries by building a small image on top of the published one;
+`docker/prod/Dockerfile.scripts` is a working template with both routes:
+
+- **Debian packages** (`python3-requests`, `python3-openpyxl`, …) — prebuilt, no
+  compiler in the image. `apt-cache search '^python3-'` lists them.
+- **pip into a virtualenv**, for anything Debian does not package. Build it with
+  `--system-site-packages` so `pyodbc` and the AS/400 helper still import, and
+  point `WEBHOOK_PYTHON_BIN` at `/opt/venv/bin/python3`.
+
+The DB2 variant already carries `pyodbc`.
 
 ## Testing a rule
 
