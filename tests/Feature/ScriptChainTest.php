@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\ActionRun;
 use App\Models\Endpoint;
 use App\Models\Rule;
+use App\Models\RuleAction;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
@@ -282,6 +283,39 @@ class ScriptChainTest extends TestCase
         $this->send($endpoint);
 
         $this->assertSame('v=renamed', ActionRun::where('type', 'email')->firstOrFail()->detail['subject']);
+    }
+
+    public function test_a_name_is_stored_in_the_shape_a_template_can_use(): void
+    {
+        // What a user types is not necessarily a usable key. Storing it as
+        // typed is what made "get_emailAddress" address nothing.
+        $cases = [
+            'get_emailAddress' => 'get_emailaddress',
+            'Számla lekérdezés' => 'szamla_lekerdezes',
+            '  spaced  out  ' => 'spaced_out',
+            '!!!' => null,
+            '' => null,
+        ];
+
+        foreach ($cases as $typed => $stored) {
+            $this->assertSame($stored, RuleAction::normalizeName($typed), "for: {$typed}");
+        }
+
+        $endpoint = $this->endpoint();
+
+        $this->actingAs(User::factory()->create())
+            ->postJson('/api/rules', [
+                'name' => 'Chain',
+                'endpoint_id' => $endpoint->id,
+                'conditions' => ['type' => 'group', 'op' => 'and', 'children' => []],
+                'actions' => [
+                    ['type' => 'email', 'name' => 'get_emailAddress', 'config' => [
+                        'to' => 'ops@example.com', 'subject' => 'x', 'body_html' => '<p>x</p>',
+                    ]],
+                ],
+            ])->assertCreated();
+
+        $this->assertSame('get_emailaddress', RuleAction::firstOrFail()->name);
     }
 
     public function test_steps_do_not_leak_from_one_rule_into_another(): void

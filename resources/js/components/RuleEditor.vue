@@ -27,7 +27,9 @@ const testResult = ref(null);
 const addEmailAction = () => {
     form.value.actions.push({
         type: 'email',
-        name: t('rules.emailAction'),
+        // No default name: an invented one becomes the template key, and
+        // "Python szkript" made a step called python_szkript.
+        name: '',
         enabled: true,
         config: { to: '', cc: '', subject: '', body_html: '', inline_css: true },
     });
@@ -36,7 +38,7 @@ const addEmailAction = () => {
 const addScriptAction = () => {
     form.value.actions.push({
         type: 'script',
-        name: t('rules.scriptAction'),
+        name: '',
         enabled: true,
         config: { source: 'file', script: '', args: '', stdin: 'json', code: '' },
     });

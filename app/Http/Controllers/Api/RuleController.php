@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Rule;
+use App\Models\RuleAction;
 use App\Services\Rules\ConditionValidator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -140,7 +141,7 @@ class RuleController extends Controller
         foreach (array_values($actions) as $position => $action) {
             $attributes = [
                 'type' => $action['type'],
-                'name' => $action['name'] ?? null,
+                'name' => RuleAction::normalizeName($action['name'] ?? null),
                 'enabled' => $action['enabled'] ?? true,
                 'position' => $position,
                 'config' => $action['config'],

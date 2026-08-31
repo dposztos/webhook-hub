@@ -56,3 +56,22 @@ export async function copyText(text) {
         return ok;
     }
 }
+
+/**
+ * A step's name is also the key a template addresses it by, so the field only
+ * accepts what a template can use: no accents, no capitals, no spaces. Typed
+ * text is converted rather than rejected — an error message on every keystroke
+ * would be worse than simply showing what the name becomes.
+ *
+ * Trailing separators survive here on purpose, or "get_" could never be typed
+ * on the way to "get_email"; the server trims them when the rule is saved.
+ */
+export function stepName(value) {
+    return (value ?? '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9_]+/g, '_')
+        .replace(/_{2,}/g, '_')
+        .slice(0, 150);
+}

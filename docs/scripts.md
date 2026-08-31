@@ -154,10 +154,11 @@ steps, not one script that also sends mail:
 {% endfor %}
 ```
 
-A step is addressed by its **action name**, lowercased and underscored
-(`Lekérdezés` → `lekerdezes`), or by `step_1`, `step_2`… when it has no name. Two
-steps with the same name get a `_2` suffix rather than silently overwriting each
-other. Each step carries:
+A step is addressed by its **action name**, which is also stored as the key: the
+name field accepts lower case letters, digits and `_`, converting anything else
+as you type (`Lekérdezés` → `lekerdezes`). An action with no name is `step_1`,
+`step_2`… by position. Two steps with the same name get a `_2` suffix rather
+than silently overwriting each other. Each step carries:
 
 | field | what it holds |
 | --- | --- |

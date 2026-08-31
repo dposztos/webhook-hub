@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue';
 import { api } from '../api';
 import { t } from '../i18n';
+import { stepName } from '../format';
 
 const props = defineProps({
     action: { type: Object, required: true },
@@ -12,12 +13,7 @@ const props = defineProps({
 // The same key the engine derives server-side, so the hint matches reality:
 // the action's name slugified, or "step_<n>" when it has none.
 const stepKey = computed(() => {
-    const slug = (props.action.name ?? '')
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '_')
-        .replace(/^_+|_+$/g, '');
+    const slug = stepName(props.action.name).replace(/^_+|_+$/g, '');
 
     return slug || `step_${props.index + 1}`;
 });
@@ -97,9 +93,12 @@ const runPreview = async (send = false) => {
             <span class="text-sm font-medium text-slate-700 dark:text-slate-300">{{ $t('email.title') }}</span>
             <input
                 :value="action.name"
-                class="inp h-7 w-44 py-0 text-xs"
+                class="inp h-7 w-44 py-0 font-mono text-xs"
                 :placeholder="$t('actions.namePlaceholder')"
-                @input="emit('update', { ...action, name: $event.target.value })"
+                :title="$t('actions.nameRule')"
+                maxlength="150"
+                @input="emit('update', { ...action, name: stepName($event.target.value) })"
+                @blur="emit('update', { ...action, name: stepName($event.target.value).replace(/^_+|_+$/g, '') })"
             />
             <label class="ml-2 flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
                 <input

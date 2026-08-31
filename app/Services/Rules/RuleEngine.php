@@ -12,7 +12,6 @@ use App\Services\Actions\ActionResult;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 use Throwable;
 
 class RuleEngine
@@ -190,8 +189,10 @@ class RuleEngine
      */
     private function stepKey(RuleAction $action, int $position, array $steps): string
     {
-        $name = Str::slug((string) ($action->name ?? ''), '_');
-        $key = $name !== '' ? $name : 'step_'.($position + 1);
+        // Names are stored normalised, so this is usually a no-op; rows written
+        // before that was true still need it.
+        $name = RuleAction::normalizeName($action->name);
+        $key = $name ?? 'step_'.($position + 1);
 
         if (! array_key_exists($key, $steps)) {
             return $key;
