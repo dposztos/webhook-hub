@@ -39,6 +39,13 @@ if [ "$WEBHOOK_SCRIPTS_REQUIREMENTS" = "true" ]; then
         want=$(sha256sum "$requirements" | cut -d' ' -f1)
         have=$(cat "$venv/.requirements-hash" 2>/dev/null || echo none)
 
+        if [ "$want" = "$have" ]; then
+            # Nothing to install. Any error still on disk belongs to a version of
+            # the file that is no longer there — leaving it would keep an old
+            # failure on the screen after the edit that fixed it.
+            rm -f "$venv/.requirements-error"
+        fi
+
         if [ "$want" != "$have" ]; then
             echo "Installing $requirements…"
             rm -f "$venv/.requirements-error"
