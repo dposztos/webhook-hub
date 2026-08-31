@@ -1,0 +1,109 @@
+# Webhook Hub — the DB2 variant, for a server that talks to an IBM i (AS/400).
+#
+# Everything here is the same as the root docker-compose.yml except the image:
+# this one carries Python, unixODBC and the IBM i Access ODBC driver, so script
+# actions can query Db2 for i. See docs/as400.md.
+#
+#   cp docker/prod/compose.db2.yml docker-compose.yml     # or use -f
+#   cp .env.example .env                                  # then fill it in
+#   docker compose run --rm app php artisan key:generate --show
+#   docker compose up -d
+#
+# The driver is amd64 only — IBM ships no arm64 build.
+name: webhook-hub
+
+services:
+  app:
+    image: ${APP_IMAGE:-ghcr.io/dposztos/webhook-hub:db2}
+    container_name: webhook-hub
+    restart: unless-stopped
+    ports:
+      - "${APP_HOST_PORT:-8080}:80"
+    environment:
+      APP_NAME: ${APP_NAME:-Webhook Hub}
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_KEY: ${APP_KEY:?set APP_KEY in .env}
+      APP_URL: ${APP_URL:-http://localhost:8080}
+      APP_TIMEZONE: ${APP_TIMEZONE:-Europe/Budapest}
+      APP_LOCALE: ${APP_LOCALE:-hu}
+      APP_FALLBACK_LOCALE: en
+
+      LOG_CHANNEL: stderr
+      LOG_LEVEL: ${LOG_LEVEL:-warning}
+
+      DB_CONNECTION: pgsql
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_DATABASE: ${DB_DATABASE:-webhookhub}
+      DB_USERNAME: ${DB_USERNAME:-webhookhub}
+      DB_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env}
+
+      SESSION_DRIVER: database
+      # "true" behind HTTPS. Over plain HTTP the browser drops the session
+      # cookie and the login form simply reloads itself.
+      SESSION_SECURE_COOKIE: ${SESSION_SECURE:-false}
+      QUEUE_CONNECTION: database
+      CACHE_STORE: database
+
+      MAIL_MAILER: ${MAIL_MAILER:-log}
+      MAIL_HOST: ${MAIL_HOST:-}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_SCHEME: ${MAIL_SCHEME:-smtp}
+      MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS:-webhook-hub@example.com}
+      MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Webhook Hub}
+
+      WEBHOOK_MAX_BODY_BYTES: ${WEBHOOK_MAX_BODY_BYTES:-524288}
+      WEBHOOK_INGEST_RATE_LIMIT: ${WEBHOOK_INGEST_RATE_LIMIT:-600}
+      WEBHOOK_RETENTION_DAYS: ${WEBHOOK_RETENTION_DAYS:-}
+      WEBHOOK_MAX_ACTIONS: ${WEBHOOK_MAX_ACTIONS:-20}
+      WEBHOOK_ALLOWED_RECIPIENTS: ${WEBHOOK_ALLOWED_RECIPIENTS:-}
+
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+
+      # Script actions. Both switches are off by default; the AS/400 work needs
+      # the first one, and the second only if rules may carry their own code.
+      WEBHOOK_SCRIPTS_ENABLED: ${WEBHOOK_SCRIPTS_ENABLED:-true}
+      WEBHOOK_SCRIPTS_ALLOW_INLINE: ${WEBHOOK_SCRIPTS_ALLOW_INLINE:-false}
+      WEBHOOK_SCRIPTS_DIR: /app/scripts
+      WEBHOOK_PYTHON_BIN: /usr/bin/python3
+      WEBHOOK_SCRIPT_TIMEOUT: ${WEBHOOK_SCRIPT_TIMEOUT:-30}
+      WEBHOOK_SCRIPT_MAX_TIMEOUT: ${WEBHOOK_SCRIPT_MAX_TIMEOUT:-300}
+
+      # Db2 for i. Read by scripts/as400.py, never stored in the database.
+      AS400_HOST: ${AS400_HOST:-}
+      AS400_USER: ${AS400_USER:-}
+      AS400_PASSWORD: ${AS400_PASSWORD:-}
+      AS400_LIBRARIES: ${AS400_LIBRARIES:-}
+      AS400_NAMING: ${AS400_NAMING:-0}
+      AS400_COMMIT: ${AS400_COMMIT:-0}
+      AS400_EXTRA: ${AS400_EXTRA:-}
+    volumes:
+      # The .py files rules may run. Read-only: the app reads and executes them,
+      # it never needs to change them.
+      - ${WEBHOOK_SCRIPTS_HOST_DIR:-./scripts}:/app/scripts:ro
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:16-alpine
+    container_name: webhook-hub-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-webhookhub}
+      POSTGRES_USER: ${DB_USERNAME:-webhookhub}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-webhookhub}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  db-data:
