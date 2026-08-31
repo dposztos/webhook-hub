@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\ActionRun;
 use App\Models\Endpoint;
 use App\Models\Rule;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
 use Tests\TestCase;
@@ -253,6 +254,34 @@ class ScriptChainTest extends TestCase
         $this->send($endpoint);
 
         $this->assertSame('1-2', ActionRun::where('type', 'email')->firstOrFail()->detail['subject']);
+    }
+
+    public function test_renaming_an_action_through_the_api_changes_the_key_templates_use(): void
+    {
+        // The editor now has a field for this, and the name it sends is what the
+        // engine keys the step by — so the two have to agree end to end.
+        file_put_contents($this->dir.'/query.py', 'import json; print(json.dumps({"value": "renamed"}))');
+
+        $endpoint = $this->endpoint();
+
+        $this->actingAs(User::factory()->create())
+            ->postJson('/api/rules', [
+                'name' => 'Chain',
+                'endpoint_id' => $endpoint->id,
+                'conditions' => ['type' => 'group', 'op' => 'and', 'children' => []],
+                'actions' => [
+                    ['type' => 'script', 'name' => 'Számla lekérdezés', 'config' => ['script' => 'query.py']],
+                    ['type' => 'email', 'name' => 'Értesítés', 'config' => [
+                        'to' => 'ops@example.com',
+                        'subject' => 'v={{ steps.szamla_lekerdezes.output.value }}',
+                        'body_html' => '<p>x</p>',
+                    ]],
+                ],
+            ])->assertCreated();
+
+        $this->send($endpoint);
+
+        $this->assertSame('v=renamed', ActionRun::where('type', 'email')->firstOrFail()->detail['subject']);
     }
 
     public function test_steps_do_not_leak_from_one_rule_into_another(): void

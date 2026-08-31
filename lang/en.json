@@ -170,7 +170,8 @@
     "rules.emailAction": "E-mail",
     "actions.onlyIfPrevious": "only if the previous step succeeded",
     "actions.onlyIfPreviousTitle": "Skip this action when the step before it failed or was skipped",
-    "actions.stepName": "Step name in templates: {key}",
+    "actions.stepRef": "In templates:",
+    "actions.namePlaceholder": "Step name",
     "rules.addScriptAction": "+ Python script",
     "rules.scriptAction": "Python script",
 

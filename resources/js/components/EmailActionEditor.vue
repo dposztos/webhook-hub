@@ -22,6 +22,11 @@ const stepKey = computed(() => {
     return slug || `step_${props.index + 1}`;
 });
 
+// What a later step actually types to read this one. Showing the bare key was
+// not enough: the payload lives under "output", and that is where people got
+// stuck.
+const stepRef = computed(() => `steps.${stepKey}`);
+
 const emit = defineEmits(['update', 'remove', 'notify']);
 
 const preview = ref(null);
@@ -90,6 +95,12 @@ const runPreview = async (send = false) => {
     <div class="rounded-lg border border-slate-200 dark:border-slate-800">
         <div class="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-3 py-2 dark:bg-slate-800/40 dark:border-slate-800">
             <span class="text-sm font-medium text-slate-700 dark:text-slate-300">{{ $t('email.title') }}</span>
+            <input
+                :value="action.name"
+                class="inp h-7 w-44 py-0 text-xs"
+                :placeholder="$t('actions.namePlaceholder')"
+                @input="emit('update', { ...action, name: $event.target.value })"
+            />
             <label class="ml-2 flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
                 <input
                     type="checkbox"
@@ -111,7 +122,9 @@ const runPreview = async (send = false) => {
                 />
                 {{ $t('actions.onlyIfPrevious') }}
             </label>
-            <span class="text-xs text-slate-400 dark:text-slate-600">{{ $t('actions.stepName', { key: stepKey }) }}</span>
+            <span class="text-xs text-slate-400 dark:text-slate-600">
+                {{ $t('actions.stepRef') }} <code class="text-slate-500 dark:text-slate-500">{{ stepRef }}</code>
+            </span>
             <button class="ml-auto btn-danger text-xs" @click="emit('remove')">{{ $t('email.removeAction') }}</button>
         </div>
 
