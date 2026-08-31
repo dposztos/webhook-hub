@@ -48,6 +48,10 @@ services:
       MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
       MAIL_FROM_NAME: ${MAIL_FROM_NAME}
 
+      # This stack runs behind a reverse proxy that sets X-Forwarded-*, so the
+      # proxy is trusted here. On a directly published port leave it empty.
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-*}
+
       WEBHOOK_MAX_BODY_BYTES: "524288"
       WEBHOOK_INGEST_RATE_LIMIT: "600"
 

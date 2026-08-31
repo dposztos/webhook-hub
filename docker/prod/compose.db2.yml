@@ -66,6 +66,13 @@ services:
       MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS:-webhook-hub@example.com}
       MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Webhook Hub}
 
+      # Which peers may set X-Forwarded-* and so decide the client IP and the
+      # URLs this app generates. Empty is right for a container published on a
+      # port, as here: with a proxy trusted but no X-Forwarded-Port arriving,
+      # redirects lose the published port and land on :80. Behind a reverse
+      # proxy set it to that proxy's address (or "*" if only it can reach you).
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-}
+
       WEBHOOK_MAX_BODY_BYTES: ${WEBHOOK_MAX_BODY_BYTES:-524288}
       WEBHOOK_INGEST_RATE_LIMIT: ${WEBHOOK_INGEST_RATE_LIMIT:-600}
       WEBHOOK_RETENTION_DAYS: ${WEBHOOK_RETENTION_DAYS:-}
