@@ -98,8 +98,39 @@ The image ships a bare `python3`: the standard library (`json`, `urllib`, `csv`,
 the system interpreter externally managed, so nothing can be installed into a
 running container — by design, since a container is meant to be replaceable.
 
-Add libraries by building a small image on top of the published one;
-`docker/prod/Dockerfile.scripts` is a working template with both routes:
+### requirements.txt, without rebuilding
+
+Put a `requirements.txt` next to your scripts and switch it on:
+
+```dotenv
+WEBHOOK_SCRIPTS_REQUIREMENTS=true
+```
+
+```
+scripts/requirements.txt →  six==1.16.0
+                            openpyxl==3.1.5
+```
+
+On start the container installs it into a virtualenv (kept on its own volume,
+built `--system-site-packages` so `pyodbc` and the rest of the image stay
+importable) and runs every script with that interpreter. A new library is then a
+line in the file plus `docker compose restart app`. Unchanged file, no reinstall.
+A failed install does not keep the app down: webhooks are still captured, what
+was installed before keeps working, and the rule editor shows pip's error.
+
+Pin versions. The point of a file is that two containers end up the same.
+
+**Why not install whatever a script imports, automatically?** Because the import
+name is not the package name — `import yaml` is `pyyaml`, `import cv2` is
+`opencv-python` — so a guess either misses or installs the package that someone
+registered under the guessable name. It would also run pip during a webhook, and
+leave two containers with different versions of the same library.
+
+### A derived image, for a fixed set
+
+When the set of libraries belongs to the deployment rather than to the scripts,
+build them in; `docker/prod/Dockerfile.scripts` is a working template with both
+routes:
 
 - **Debian packages** (`python3-requests`, `python3-openpyxl`, …) — prebuilt, no
   compiler in the image. `apt-cache search '^python3-'` lists them.

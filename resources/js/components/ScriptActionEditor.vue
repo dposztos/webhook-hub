@@ -111,6 +111,14 @@ const run = async (live) => {
                 {{ $t('script.featureOff') }}
             </p>
 
+            <div
+                v-if="info?.requirements_error"
+                class="rounded-lg bg-red-50 p-2 text-xs text-red-800 ring-1 ring-red-100 dark:bg-red-950/40 dark:text-red-200 dark:ring-red-900"
+            >
+                <p class="font-medium">{{ $t('script.requirementsFailed') }}</p>
+                <pre class="mt-1 max-h-32 overflow-auto whitespace-pre-wrap font-mono text-[11px]">{{ info.requirements_error }}</pre>
+            </div>
+
             <div class="flex flex-wrap items-center gap-3">
                 <label class="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
                     <input

@@ -40,8 +40,14 @@ return [
         'unknown_type' => 'Unknown action type: :type',
         'limit_reached' => 'Action limit reached (:limit actions per message)',
         'rule_failed' => 'Rule evaluation crashed',
-        'previous_failed' => 'Skipped: the previous step ended as :status',
-        'no_previous' => 'no previous step',
+        'previous_failed' => 'Skipped, because the previous step :status.',
+        'no_previous' => 'does not exist',
+        'failed_summary' => 'Failed',
+        'status' => [
+            'success' => 'succeeded',
+            'failed' => 'failed',
+            'skipped' => 'was skipped',
+        ],
     ],
 
     'email' => [
@@ -66,6 +72,10 @@ return [
         'exit_code' => 'The script exited with code :code — :error',
         'timeout' => 'The script was killed after :seconds seconds.',
         'truncated' => 'output truncated',
+    ],
+
+    'rules' => [
+        'all_endpoints' => 'Every endpoint',
     ],
 
     'template' => [

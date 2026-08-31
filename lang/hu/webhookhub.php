@@ -40,8 +40,14 @@ return [
         'unknown_type' => 'Ismeretlen akció-típus: :type',
         'limit_reached' => 'Akció-korlát elérve (:limit akció/üzenet)',
         'rule_failed' => 'Szabály kiértékelése elszállt',
-        'previous_failed' => 'Kihagyva: az előző lépés :status állapotban zárult',
-        'no_previous' => 'nincs előző lépés',
+        'previous_failed' => 'Kihagyva, mert az előző lépés :status.',
+        'no_previous' => 'nem létezik',
+        'failed_summary' => 'Sikertelen',
+        'status' => [
+            'success' => 'sikeres volt',
+            'failed' => 'hibára futott',
+            'skipped' => 'kimaradt',
+        ],
     ],
 
     'email' => [
@@ -66,6 +72,10 @@ return [
         'exit_code' => 'A szkript :code hibakóddal állt le — :error',
         'timeout' => 'A szkript :seconds másodperc után le lett állítva.',
         'truncated' => 'a kimenet levágva',
+    ],
+
+    'rules' => [
+        'all_endpoints' => 'Minden endpoint',
     ],
 
     'template' => [

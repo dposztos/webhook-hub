@@ -29,6 +29,6 @@ class ActionResult
     /** @param array<string, mixed> $detail */
     public static function failed(string $error, array $detail = []): self
     {
-        return new self('failed', 'Sikertelen', $detail, $error);
+        return new self('failed', __('webhookhub.actions.failed_summary'), $detail, $error);
     }
 }

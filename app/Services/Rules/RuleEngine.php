@@ -107,7 +107,11 @@ class RuleEngine
                     // Without this an e-mail built from a query that failed would
                     // still go out, carrying nothing.
                     $result = ActionResult::skipped(__('webhookhub.actions.previous_failed', [
-                        'status' => $previous ?? __('webhookhub.actions.no_previous'),
+                        // The status is a code ("failed"); the sentence around it
+                        // is translated, so the word inside it has to be too.
+                        'status' => $previous !== null
+                            ? __('webhookhub.actions.status.'.$previous)
+                            : __('webhookhub.actions.no_previous'),
                     ]));
 
                     $actionContext['steps'][$this->stepKey($action, $position, $actionContext['steps'])] = $this->stepValue($result);

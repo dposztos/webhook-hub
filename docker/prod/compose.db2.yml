@@ -90,6 +90,10 @@ services:
       WEBHOOK_PYTHON_BIN: /usr/bin/python3
       WEBHOOK_SCRIPT_TIMEOUT: ${WEBHOOK_SCRIPT_TIMEOUT:-30}
       WEBHOOK_SCRIPT_MAX_TIMEOUT: ${WEBHOOK_SCRIPT_MAX_TIMEOUT:-300}
+      # Python libraries for scripts, declared in <scripts>/requirements.txt and
+      # installed on start. A new library then needs a restart, not a new image.
+      WEBHOOK_SCRIPTS_REQUIREMENTS: ${WEBHOOK_SCRIPTS_REQUIREMENTS:-false}
+      WEBHOOK_SCRIPTS_VENV: /app/storage/pyenv
 
       # Db2 for i. Read by scripts/as400.py, never stored in the database.
       AS400_HOST: ${AS400_HOST:-}
@@ -103,6 +107,9 @@ services:
       # The .py files rules may run. Read-only: the app reads and executes them,
       # it never needs to change them.
       - ${WEBHOOK_SCRIPTS_HOST_DIR:-./scripts}:/app/scripts:ro
+      # Keeps the installed libraries across a recreate, so a restart does not
+      # mean waiting for pip again.
+      - script-venv:/app/storage/pyenv
     depends_on:
       db:
         condition: service_healthy
@@ -125,3 +132,4 @@ services:
 
 volumes:
   db-data:
+  script-venv:

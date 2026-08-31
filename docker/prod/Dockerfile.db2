@@ -44,6 +44,7 @@ RUN apt-get update \
         nginx supervisor tzdata ca-certificates curl \
         libpq5 libicu72 libzip4 \
         python3 python3-pyodbc \
+        python3-venv python3-pip \
         unixodbc odbcinst libodbc2 libodbcinst2 \
     && apt-get install -y --no-install-recommends libpq-dev libicu-dev libzip-dev \
     && docker-php-ext-install -j"$(nproc)" pdo_pgsql pcntl intl zip bcmath opcache \

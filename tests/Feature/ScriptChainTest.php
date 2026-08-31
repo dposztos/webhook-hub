@@ -151,8 +151,41 @@ class ScriptChainTest extends TestCase
         $email = ActionRun::where('type', 'email')->firstOrFail();
 
         $this->assertSame('skipped', $email->status);
-        $this->assertStringContainsString('failed', $email->summary);
+        $this->assertSame('Skipped, because the previous step failed.', $email->summary);
         $this->assertCount(0, app('mailer')->getSymfonyTransport()->messages());
+    }
+
+    public function test_the_reason_is_written_in_the_reader_s_language(): void
+    {
+        // The status arrives as a code ("failed"). Pasted into a translated
+        // sentence untranslated, a Hungarian reader gets an English word in the
+        // middle of it — which is exactly what the first version did.
+        config(['app.locale' => 'hu']);
+        app()->setLocale('hu');
+
+        file_put_contents($this->dir.'/broken.py', 'import sys; sys.exit(2)');
+
+        $endpoint = $this->endpoint();
+        $rule = $this->rule($endpoint);
+
+        $rule->actions()->create(['type' => 'script', 'name' => 'Q', 'position' => 0, 'config' => ['script' => 'broken.py']]);
+        $rule->actions()->create([
+            'type' => 'email',
+            'position' => 1,
+            'config' => [
+                'to' => 'ops@example.com',
+                'subject' => 'x',
+                'body_html' => '<p>x</p>',
+                'only_if_previous_succeeded' => true,
+            ],
+        ]);
+
+        $this->send($endpoint);
+
+        $runs = ActionRun::orderBy('id')->get();
+
+        $this->assertSame('Kihagyva, mert az előző lépés hibára futott.', $runs->last()->summary);
+        $this->assertSame('Sikertelen', $runs->first()->summary);
     }
 
     public function test_without_that_switch_the_next_step_still_runs(): void

@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\RuleAction;
 use App\Services\Actions\ActionResult;
 use App\Services\Actions\ScriptAction;
+use App\Services\Scripts\ScriptLocator;
 use Illuminate\Support\Facades\File;
 use Tests\TestCase;
 
@@ -195,6 +196,45 @@ class ScriptActionTest extends TestCase
 
         $this->assertSame('success', $result->status, $result->error ?? '');
         $this->assertStringContainsString('shared', $result->detail['stdout']);
+    }
+
+    public function test_it_prefers_the_virtualenv_interpreter_when_one_was_built(): void
+    {
+        $locator = app(ScriptLocator::class);
+
+        config(['webhookhub.scripts.venv' => $this->dir.'/pyenv']);
+
+        // No virtualenv yet: the configured interpreter stands.
+        $this->assertSame(config('webhookhub.scripts.python'), $locator->interpreter());
+        $this->assertNull($locator->venvPython());
+
+        File::ensureDirectoryExists($this->dir.'/pyenv/bin');
+        file_put_contents($this->dir.'/pyenv/bin/python3', "#!/bin/sh\nexec ".config('webhookhub.scripts.python')." \"$@\"\n");
+        chmod($this->dir.'/pyenv/bin/python3', 0o755);
+
+        $this->assertSame($this->dir.'/pyenv/bin/python3', $locator->interpreter());
+
+        // And a script really runs through it.
+        $this->write('venv.py', 'print("through the venv")');
+
+        $result = $this->runScript(['script' => 'venv.py']);
+
+        $this->assertSame('success', $result->status, $result->error ?? '');
+        $this->assertStringContainsString('through the venv', $result->detail['stdout']);
+    }
+
+    public function test_a_failed_requirements_install_is_readable_afterwards(): void
+    {
+        $locator = app(ScriptLocator::class);
+
+        config(['webhookhub.scripts.venv' => $this->dir.'/pyenv']);
+
+        $this->assertNull($locator->requirementsError());
+
+        File::ensureDirectoryExists($this->dir.'/pyenv');
+        file_put_contents($this->dir.'/pyenv/.requirements-error', "ERROR: No matching distribution found for nosuchpkg\n");
+
+        $this->assertStringContainsString('nosuchpkg', (string) $locator->requirementsError());
     }
 
     public function test_the_whole_feature_is_off_until_it_is_switched_on(): void

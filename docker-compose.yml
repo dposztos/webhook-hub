@@ -80,6 +80,10 @@ services:
       WEBHOOK_PYTHON_BIN: /usr/bin/python3
       WEBHOOK_SCRIPT_TIMEOUT: ${WEBHOOK_SCRIPT_TIMEOUT:-30}
       WEBHOOK_SCRIPT_MAX_TIMEOUT: ${WEBHOOK_SCRIPT_MAX_TIMEOUT:-300}
+      # Python libraries for scripts, declared in <scripts>/requirements.txt and
+      # installed on start. A new library then needs a restart, not a new image.
+      WEBHOOK_SCRIPTS_REQUIREMENTS: ${WEBHOOK_SCRIPTS_REQUIREMENTS:-false}
+      WEBHOOK_SCRIPTS_VENV: /app/storage/pyenv
 
       # Db2 for i (AS/400) credentials for script actions. They live here rather
       # than in a rule, so nobody has to paste a password into the UI. Needs the
@@ -94,6 +98,9 @@ services:
       # Scripts the rules may run. Mounted read-only: the app needs to read and
       # execute them, never to change them.
       - ${WEBHOOK_SCRIPTS_HOST_DIR:-./scripts}:/app/scripts:ro
+      # Keeps the installed libraries across a recreate, so a restart does not
+      # mean waiting for pip again.
+      - script-venv:/app/storage/pyenv
     depends_on:
       db:
         condition: service_healthy
@@ -116,3 +123,4 @@ services:
 
 volumes:
   db-data:
+  script-venv:

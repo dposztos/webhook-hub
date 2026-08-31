@@ -50,7 +50,7 @@ class ScriptAction implements ActionContract
         }
 
         $timeout = $this->timeout($config);
-        $python = (string) config('webhookhub.scripts.python');
+        $python = $this->locator->interpreter();
         $workingDir = $this->locator->directory();
 
         // Inline code is deliberately NOT rendered as a template: the script gets

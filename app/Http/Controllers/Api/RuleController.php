@@ -167,7 +167,7 @@ class RuleController extends Controller
     {
         return array_merge($rule->toArray(), [
             'scope' => $rule->scopeType(),
-            'scope_label' => $rule->endpoint?->name ?? $rule->group?->name ?? 'Minden endpoint',
+            'scope_label' => $rule->endpoint?->name ?? $rule->group?->name ?? __('webhookhub.rules.all_endpoints'),
         ]);
     }
 }

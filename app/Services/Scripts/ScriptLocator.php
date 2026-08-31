@@ -26,6 +26,54 @@ class ScriptLocator
     }
 
     /**
+     * The interpreter a script actually runs with: the virtualenv built from
+     * requirements.txt when there is one, otherwise the configured Python.
+     *
+     * Resolved per run rather than at boot, because the virtualenv appears
+     * while the container starts and a cached config would freeze the answer
+     * from before it existed.
+     */
+    public function interpreter(): string
+    {
+        $venv = $this->venvPython();
+
+        return $venv ?? (string) config('webhookhub.scripts.python');
+    }
+
+    /** The virtualenv's python, when it is there and runnable. */
+    public function venvPython(): ?string
+    {
+        $venv = (string) config('webhookhub.scripts.venv');
+
+        if ($venv === '') {
+            return null;
+        }
+
+        $python = rtrim($venv, '/').'/bin/python3';
+
+        return is_executable($python) ? $python : null;
+    }
+
+    /**
+     * What went wrong the last time requirements.txt was installed, if it did.
+     * The entrypoint writes this; the editor shows it, so a failed install is
+     * not something you find out from a script that cannot import.
+     */
+    public function requirementsError(): ?string
+    {
+        $venv = (string) config('webhookhub.scripts.venv');
+        $marker = rtrim($venv, '/').'/.requirements-error';
+
+        if ($venv === '' || ! is_file($marker)) {
+            return null;
+        }
+
+        $error = trim((string) file_get_contents($marker));
+
+        return $error === '' ? null : mb_strimwidth($error, 0, 2000, '…');
+    }
+
+    /**
      * The script directory, resolved through symlinks. Null when it does not exist.
      */
     public function directory(): ?string

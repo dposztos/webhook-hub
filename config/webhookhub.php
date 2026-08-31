@@ -40,6 +40,15 @@ return [
         // How much of stdout/stderr is kept per run. The rest is dropped, so a
         // chatty script cannot fill the database.
         'max_output_bytes' => (int) env('WEBHOOK_SCRIPT_MAX_OUTPUT', 64 * 1024),
+
+        // Install "requirements.txt" from the script directory on start, into
+        // the virtualenv below, and run scripts with that interpreter. Lets a
+        // new library arrive with a restart instead of a rebuilt image.
+        'requirements' => filter_var(env('WEBHOOK_SCRIPTS_REQUIREMENTS', false), FILTER_VALIDATE_BOOL),
+
+        // Where that virtualenv lives. Put it on a volume, or every recreated
+        // container reinstalls from scratch.
+        'venv' => env('WEBHOOK_SCRIPTS_VENV', storage_path('pyenv')),
     ],
 
     'mail' => [
