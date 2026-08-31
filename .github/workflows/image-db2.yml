@@ -9,6 +9,12 @@ name: Container image (DB2)
 on:
   push:
     branches: [script-actions]
+    # Prose and the compose file are not in the image; rebuilding for them
+    # would only re-tag an identical build.
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - 'docker/prod/compose.db2.yml'
   workflow_dispatch:
 
 concurrency:

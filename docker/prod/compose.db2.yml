@@ -6,8 +6,19 @@
 #
 #   cp docker/prod/compose.db2.yml docker-compose.yml     # or use -f
 #   cp .env.example .env                                  # then fill it in
-#   docker compose run --rm app php artisan key:generate --show
+#   docker run --rm --entrypoint php ghcr.io/dposztos/webhook-hub:db2 \
+#       artisan key:generate --show                       # paste into APP_KEY
 #   docker compose up -d
+#
+# The key has to be generated with `docker run`, not `docker compose run`: this
+# file refuses to start without APP_KEY, which is the point of the guard.
+#
+# The scripts folder is mounted over /app/scripts, which hides the helpers that
+# ship in the image. Copy them out once, into the folder you mount:
+#
+#   mkdir -p scripts && docker run --rm --entrypoint sh \
+#       ghcr.io/dposztos/webhook-hub:db2 -c 'cd /app/scripts && tar -cf - .' \
+#     | tar -C scripts -xf -
 #
 # The driver is amd64 only — IBM ships no arm64 build.
 name: webhook-hub
