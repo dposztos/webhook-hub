@@ -20,7 +20,9 @@ RUN composer dump-autoload --optimize --no-dev
 # 3) Runtime: nginx + php-fpm in one container, under supervisord
 FROM php:8.4-fpm-alpine
 
-RUN apk add --no-cache nginx supervisor postgresql-dev icu-dev libzip-dev tzdata \
+# python3 is here for the script action; it is inert unless WEBHOOK_SCRIPTS_ENABLED
+# is turned on. See docker/prod/Dockerfile.scripts to add Python libraries.
+RUN apk add --no-cache nginx supervisor postgresql-dev icu-dev libzip-dev tzdata python3 \
     && apk add --no-cache --virtual .build-deps $PHPIZE_DEPS \
     && docker-php-ext-install -j$(nproc) pdo_pgsql pcntl intl zip bcmath opcache \
     && apk del .build-deps \

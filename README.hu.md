@@ -26,7 +26,8 @@ Amit az eredeti nyílt verzió nem tudott, és itt megvan:
 - **Szabályok és akciók**: a beérkezett JSON mezőire (fejlécekre,
   query-paraméterekre) épülő, egymásba ágyazható ÉS/VAGY feltételek, és rájuk
   kötött akciók. Jelenleg: e-mail küldése HTML-sablonnal, a beérkezett adatokra
-  hivatkozó változókkal.
+  hivatkozó változókkal, illetve Python szkript futtatása, ami az üzenetet a
+  standard bemenetén kapja meg.
 
 ## Kipróbálás
 
@@ -120,6 +121,28 @@ alakul, hogy a levelezőkliensek is helyesen mutassák.
 A címzett is sablon lehet: `{{ json.customer.email }}, iroda@ceg.hu`. Az
 érvénytelen címeket a rendszer kiszűri; ha nem marad egy sem, az akció hibás
 státusszal kerül a naplóba (a beérkezett üzenet megmarad).
+
+## Szkript-akciók
+
+Egy szabály Python szkriptet is futtathat a beérkező webhookra. Az üzenet
+JSON-ként érkezik a szkript standard bemenetére, a kilépési kód dönti el, hogy
+az akció sikeres volt-e, a kimenet pedig a futás mellé kerül.
+
+```python
+import json, sys
+
+payload = json.load(sys.stdin)
+print(json.dumps({"queued": payload["json"]["order"]["id"]}))
+```
+
+A szkriptek egy mappából jönnek, amit a konténerbe csatolsz — csak az ott lévő
+fájlok futtathatók; külön engedéllyel a szabály saját, beírt kódot is tarthat.
+Az egész funkció ki van kapcsolva, amíg be nem állítod a
+`WEBHOOK_SCRIPTS_ENABLED=true`-t: ez kódfuttatás a szerveren, az admin felületről
+vezérelve.
+
+Részletek, korlátok és a biztonsági mérlegelés: [docs/scripts.md](docs/scripts.md).
+IBM i (AS/400) lekérdezése ODBC-n keresztül: [docs/as400.md](docs/as400.md).
 
 ## Beállítások
 

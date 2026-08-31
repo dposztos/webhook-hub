@@ -91,7 +91,7 @@ class RuleController extends Controller
             'stop_processing' => ['nullable', 'boolean'],
             'actions' => ['sometimes', 'array', 'max:20'],
             'actions.*.id' => ['nullable', 'integer'],
-            'actions.*.type' => ['required', 'string', 'in:email'],
+            'actions.*.type' => ['required', 'string', 'in:email,script'],
             'actions.*.name' => ['nullable', 'string', 'max:150'],
             'actions.*.enabled' => ['nullable', 'boolean'],
             'actions.*.config' => ['required', 'array'],

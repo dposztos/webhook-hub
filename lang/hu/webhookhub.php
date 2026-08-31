@@ -50,6 +50,22 @@ return [
         'sent' => 'Elküldve: :addresses',
     ],
 
+    'script' => [
+        'disabled' => 'A szkript-akciók ki vannak kapcsolva (WEBHOOK_SCRIPTS_ENABLED).',
+        'inline_disabled' => 'A beírt kód futtatása ki van kapcsolva (WEBHOOK_SCRIPTS_ALLOW_INLINE); válassz fájlt a szkript-mappából.',
+        'no_directory' => 'A szkript-mappa nem létezik: :dir',
+        'bad_path' => 'Érvénytelen szkript-útvonal: :path',
+        'not_found' => 'A szkript nincs meg a szkript-mappában: :path',
+        'not_python' => 'Csak .py fájl futtatható: :path',
+        'no_code' => 'A beírt szkript üres.',
+        'temp_failed' => 'Nem sikerült ideiglenes szkriptfájlt írni ide: :dir',
+        'dry_run' => 'Próbafuttatás — a szkript nem indult el',
+        'ok' => 'Lefutott: :name',
+        'exit_code' => 'A szkript :code hibakóddal állt le — :error',
+        'timeout' => 'A szkript :seconds másodperc után le lett állítva.',
+        'truncated' => 'a kimenet levágva',
+    ],
+
     'template' => [
         'error' => 'Sablonhiba (:line. sor): :message',
         'empty_table' => 'üres',

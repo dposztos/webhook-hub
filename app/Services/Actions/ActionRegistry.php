@@ -10,6 +10,7 @@ class ActionRegistry
     /** @var array<string, class-string<ActionContract>> */
     private const TYPES = [
         'email' => EmailAction::class,
+        'script' => ScriptAction::class,
     ];
 
     public function __construct(private readonly Container $container) {}

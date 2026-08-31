@@ -4,6 +4,7 @@ import { api } from '../api';
 import ModalShell from './ModalShell.vue';
 import ConditionNode from './ConditionNode.vue';
 import EmailActionEditor from './EmailActionEditor.vue';
+import ScriptActionEditor from './ScriptActionEditor.vue';
 import { t } from '../i18n';
 
 const props = defineProps({
@@ -29,6 +30,15 @@ const addEmailAction = () => {
         name: t('rules.emailAction'),
         enabled: true,
         config: { to: '', cc: '', subject: '', body_html: '', inline_css: true },
+    });
+};
+
+const addScriptAction = () => {
+    form.value.actions.push({
+        type: 'script',
+        name: t('rules.scriptAction'),
+        enabled: true,
+        config: { source: 'file', script: '', args: '', stdin: 'json', code: '' },
     });
 };
 
@@ -141,6 +151,7 @@ const save = async () => {
                 <div class="mb-2 flex items-center gap-2">
                     <h3 class="text-sm font-semibold text-slate-800 dark:text-slate-200">{{ $t('rules.thenHeading') }}</h3>
                     <button class="ml-auto btn-secondary text-xs" @click="addEmailAction">{{ $t('rules.addEmailAction') }}</button>
+                    <button class="btn-secondary text-xs" @click="addScriptAction">{{ $t('rules.addScriptAction') }}</button>
                 </div>
 
                 <p v-if="!form.actions.length" class="rounded-lg border border-dashed border-slate-300 py-6 text-center text-sm text-slate-400 dark:border-slate-700 dark:text-slate-500">
@@ -148,7 +159,8 @@ const save = async () => {
                 </p>
 
                 <div class="space-y-3">
-                    <EmailActionEditor
+                    <component
+                        :is="action.type === 'script' ? ScriptActionEditor : EmailActionEditor"
                         v-for="(action, index) in form.actions"
                         :key="index"
                         :action="action"

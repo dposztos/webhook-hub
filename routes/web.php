@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\EndpointController;
 use App\Http\Controllers\Api\GroupController;
 use App\Http\Controllers\Api\MessageController;
 use App\Http\Controllers\Api\RuleController;
+use App\Http\Controllers\Api\ScriptController;
 use App\Http\Controllers\Api\TestController;
 use App\Http\Controllers\Api\TreeController;
 use App\Http\Controllers\AuthController;
@@ -43,6 +44,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/rules/{rule}', [RuleController::class, 'show']);
         Route::put('/rules/{rule}', [RuleController::class, 'update']);
         Route::delete('/rules/{rule}', [RuleController::class, 'destroy']);
+
+        Route::get('/scripts', [ScriptController::class, 'index']);
 
         Route::post('/test/conditions', [TestController::class, 'conditions']);
         Route::post('/test/action', [TestController::class, 'action']);

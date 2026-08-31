@@ -78,6 +78,8 @@ export const api = {
     updateRule: (id, payload) => request('PUT', `/api/rules/${id}`, payload),
     deleteRule: (id) => request('DELETE', `/api/rules/${id}`),
 
+    scripts: () => request('GET', '/api/scripts'),
+
     testConditions: (payload) => request('POST', '/api/test/conditions', payload),
     testAction: (payload) => request('POST', '/api/test/action', payload),
 };

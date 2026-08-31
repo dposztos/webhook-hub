@@ -5,7 +5,9 @@
 # ${VARIABLE} below under "Environment variables" when you deploy the stack.
 services:
   app:
-    image: ghcr.io/dposztos/webhook-hub:latest
+    # Swap in your own webhook-hub:db2 build (docker/prod/Dockerfile.db2) for
+    # Python scripts that need the IBM i (AS/400) ODBC driver.
+    image: ${APP_IMAGE}
     container_name: webhook-hub
     restart: unless-stopped
     ports:
@@ -51,6 +53,27 @@ services:
 
       ADMIN_EMAIL: ${ADMIN_EMAIL}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+
+      # Script actions: off unless you turn them on. See docs/scripts.md.
+      WEBHOOK_SCRIPTS_ENABLED: ${WEBHOOK_SCRIPTS_ENABLED}
+      WEBHOOK_SCRIPTS_ALLOW_INLINE: ${WEBHOOK_SCRIPTS_ALLOW_INLINE}
+      WEBHOOK_SCRIPTS_DIR: /app/scripts
+      WEBHOOK_PYTHON_BIN: /usr/bin/python3
+      WEBHOOK_SCRIPT_TIMEOUT: ${WEBHOOK_SCRIPT_TIMEOUT}
+      WEBHOOK_SCRIPT_MAX_TIMEOUT: ${WEBHOOK_SCRIPT_MAX_TIMEOUT}
+
+      # Db2 for i (AS/400) credentials for script actions. They live here rather
+      # than in a rule, so nobody has to paste a password into the UI. Needs the
+      # DB2-capable image — see docs/as400.md.
+      AS400_HOST: ${AS400_HOST}
+      AS400_USER: ${AS400_USER}
+      AS400_PASSWORD: ${AS400_PASSWORD}
+      AS400_LIBRARIES: ${AS400_LIBRARIES}
+      AS400_NAMING: ${AS400_NAMING}
+      AS400_COMMIT: ${AS400_COMMIT}
+    volumes:
+      # Host folder holding the .py files the rules may run, read-only.
+      - ${WEBHOOK_SCRIPTS_HOST_DIR}:/app/scripts:ro
     depends_on:
       db:
         condition: service_healthy

@@ -48,16 +48,18 @@ class TestController extends Controller
     }
 
     /**
-     * Dry-run an action: by default it only renders, without sending mail.
-     * Passing `send_to` sends a real test e-mail to that address.
+     * Dry-run an action: by default it only renders, nothing leaves the app.
+     * Passing `send_to` sends a real test e-mail to that address; passing
+     * `run` actually executes a script action.
      */
     public function action(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'type' => ['required', 'string', 'in:email'],
+            'type' => ['required', 'string', 'in:email,script'],
             'config' => ['required', 'array'],
             'message_uuid' => ['required', 'string'],
             'send_to' => ['nullable', 'email'],
+            'run' => ['nullable', 'boolean'],
         ]);
 
         $context = $this->context($data['message_uuid']);
@@ -74,13 +76,20 @@ class TestController extends Controller
             'config' => $config,
         ]);
 
-        $timed = $this->engine->runAction($action, $context, dryRun: empty($data['send_to']));
+        $live = $data['type'] === 'script'
+            ? $request->boolean('run')
+            : ! empty($data['send_to']);
+
+        $timed = $this->engine->runAction($action, $context, dryRun: ! $live);
         $result = $timed->result;
 
         return response()->json([
             'status' => $result->status,
             'summary' => $result->summary,
             'error' => $result->error,
+            // Everything the action reported, minus the rendered mail body,
+            // which the preview block below carries separately.
+            'detail' => collect($result->detail)->except('html')->all(),
             'preview' => [
                 'to' => $result->detail['to'] ?? [],
                 'cc' => $result->detail['cc'] ?? [],

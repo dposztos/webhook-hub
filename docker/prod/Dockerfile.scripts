@@ -1,0 +1,21 @@
+# Optional: the published image plus the Python libraries your scripts import.
+#
+#   docker build -f docker/prod/Dockerfile.scripts -t webhook-hub:scripts .
+#
+# then point the "app" service at webhook-hub:scripts instead of the ghcr.io
+# image. The base image ships a bare python3, which covers the standard library
+# (json, urllib, csv, sqlite3, smtplib); anything beyond that is added here.
+FROM ghcr.io/dposztos/webhook-hub:latest
+
+USER root
+
+# Alpine packages are preferred over pip: they are prebuilt, so there is no
+# compiler in the image. `apk search py3-<name>` lists what is available.
+RUN apk add --no-cache py3-requests
+
+# For a library with no Alpine package, install it into a virtualenv and set
+# WEBHOOK_PYTHON_BIN=/opt/venv/bin/python3 on the service:
+#
+# RUN apk add --no-cache py3-pip \
+#     && python3 -m venv /opt/venv \
+#     && /opt/venv/bin/pip install --no-cache-dir pyodbc openpyxl

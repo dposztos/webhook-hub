@@ -24,7 +24,8 @@ What the open-source original could not do, and this can:
   endpoint's current address, without the proxy headers.
 - **Rules and actions.** Nestable AND/OR conditions over the parsed body,
   headers and query parameters, with actions bound to them. Currently: sending
-  an e-mail from an HTML template with variables referencing the captured data.
+  an e-mail from an HTML template with variables referencing the captured data,
+  or running a Python script with the message on its stdin.
 
 ## Try it
 
@@ -112,6 +113,27 @@ inlined before sending so mail clients render it correctly.
 The recipient can be a template too: `{{ json.customer.email }}, ops@example.com`.
 Invalid addresses are dropped; if none survive, the action is logged as failed
 (the captured message is still kept).
+
+## Script actions
+
+A rule can also run a Python script when a webhook arrives. The message goes to
+the script on stdin as JSON, the exit code decides whether the action succeeded,
+and stdout/stderr are kept with the run.
+
+```python
+import json, sys
+
+payload = json.load(sys.stdin)
+print(json.dumps({"queued": payload["json"]["order"]["id"]}))
+```
+
+Scripts come from a folder you mount into the container, so only files you put
+there can run; a rule may also carry its own inline code once that is separately
+allowed. The whole feature is off until you set `WEBHOOK_SCRIPTS_ENABLED=true` —
+it is code execution on your server, driven from the admin UI.
+
+Details, guard rails and the security trade-offs: [docs/scripts.md](docs/scripts.md).
+Querying an IBM i (AS/400) over ODBC from a script: [docs/as400.md](docs/as400.md).
 
 ## Configuration
 

@@ -50,6 +50,22 @@ return [
         'sent' => 'Sent: :addresses',
     ],
 
+    'script' => [
+        'disabled' => 'Script actions are switched off (WEBHOOK_SCRIPTS_ENABLED).',
+        'inline_disabled' => 'Inline code is switched off (WEBHOOK_SCRIPTS_ALLOW_INLINE); pick a file from the script directory instead.',
+        'no_directory' => 'The script directory does not exist: :dir',
+        'bad_path' => 'Invalid script path: :path',
+        'not_found' => 'Script not found in the script directory: :path',
+        'not_python' => 'Only .py files can be run: :path',
+        'no_code' => 'The inline script is empty.',
+        'temp_failed' => 'Could not write the temporary script file into :dir',
+        'dry_run' => 'Dry run — the script was not started',
+        'ok' => 'Ran: :name',
+        'exit_code' => 'The script exited with code :code — :error',
+        'timeout' => 'The script was killed after :seconds seconds.',
+        'truncated' => 'output truncated',
+    ],
+
     'template' => [
         'error' => 'Template error (line :line): :message',
         'empty_table' => 'empty',

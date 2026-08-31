@@ -13,6 +13,35 @@ return [
     // Ceiling on actions run for one message, as a guard against rule loops.
     'max_actions_per_message' => (int) env('WEBHOOK_MAX_ACTIONS', 20),
 
+    'scripts' => [
+        // Master switch. Running scripts from a rule is remote code execution by
+        // design: anyone who can log in to the UI can make the server run code.
+        // It stays off until you turn it on deliberately.
+        'enabled' => filter_var(env('WEBHOOK_SCRIPTS_ENABLED', false), FILTER_VALIDATE_BOOL),
+
+        // The interpreter. An absolute path is safest: "/usr/bin/python3" in the
+        // container, "C:\\Python312\\python.exe" on a native Windows install.
+        'python' => env('WEBHOOK_PYTHON_BIN', 'python3'),
+
+        // The only directory scripts may be run from. A rule can pick a file
+        // inside it (subdirectories included), never outside it.
+        'dir' => env('WEBHOOK_SCRIPTS_DIR', base_path('scripts')),
+
+        // Whether a rule may carry its own inline code instead of pointing at a
+        // file. Convenient, and a second thing to weigh: with this on, the UI is
+        // a code editor that runs on the server.
+        'allow_inline' => filter_var(env('WEBHOOK_SCRIPTS_ALLOW_INLINE', false), FILTER_VALIDATE_BOOL),
+
+        // Default and hard ceiling for a single run, in seconds. A script that
+        // overruns is killed and the action is recorded as failed.
+        'timeout' => (int) env('WEBHOOK_SCRIPT_TIMEOUT', 30),
+        'max_timeout' => (int) env('WEBHOOK_SCRIPT_MAX_TIMEOUT', 300),
+
+        // How much of stdout/stderr is kept per run. The rest is dropped, so a
+        // chatty script cannot fill the database.
+        'max_output_bytes' => (int) env('WEBHOOK_SCRIPT_MAX_OUTPUT', 64 * 1024),
+    ],
+
     'mail' => [
         // Restrict who actions may e-mail, if you need it: ["*@example.com"]
         'allowed_recipients' => array_filter(explode(',', (string) env('WEBHOOK_ALLOWED_RECIPIENTS', ''))),
