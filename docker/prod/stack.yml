@@ -75,9 +75,14 @@ services:
       AS400_LIBRARIES: ${AS400_LIBRARIES}
       AS400_NAMING: ${AS400_NAMING}
       AS400_COMMIT: ${AS400_COMMIT}
-    volumes:
-      # Host folder holding the .py files the rules may run, read-only.
-      - ${WEBHOOK_SCRIPTS_HOST_DIR}:/app/scripts:ro
+    # No scripts mount here on purpose. Portainer leaves an unset variable
+    # blank, and a blank host path makes the whole stack fail to deploy with
+    # "invalid spec: :/app/scripts:ro". If this instance is to run script
+    # actions, add the mount with a real path:
+    #
+    #   volumes:
+    #     - /opt/webhook-hub/scripts:/app/scripts:ro
+    #     - script-venv:/app/storage/pyenv        # only with WEBHOOK_SCRIPTS_REQUIREMENTS
     depends_on:
       db:
         condition: service_healthy

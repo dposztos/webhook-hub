@@ -10,13 +10,14 @@ on:
   push:
     branches: [master]
     tags: ['v*']
-    # Prose and the compose file are not in the image; rebuilding for them
-    # would only re-tag an identical build.
+    # Prose, compose files and the downstream-image template are not in the
+    # image; rebuilding for them would only re-tag an identical build.
     paths-ignore:
       - '**/*.md'
       - 'docs/**'
+      - 'docker-compose.yml'
+      - 'docker/prod/stack.yml'
       - 'docker/prod/compose.db2.yml'
-      # A template for downstream images; nothing in this one depends on it.
       - 'docker/prod/Dockerfile.scripts'
   workflow_dispatch:
 

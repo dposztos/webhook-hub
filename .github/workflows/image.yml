@@ -4,6 +4,15 @@ on:
   push:
     branches: [master]
     tags: ['v*']
+    # Same reasoning as image-db2.yml: none of these end up in the image, and
+    # moving "latest" for a documentation edit invites pointless redeploys.
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - 'docker-compose.yml'
+      - 'docker/prod/stack.yml'
+      - 'docker/prod/compose.db2.yml'
+      - 'docker/prod/Dockerfile.scripts'
   workflow_dispatch:
 
 concurrency:
