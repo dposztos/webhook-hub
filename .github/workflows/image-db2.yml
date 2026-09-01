@@ -8,7 +8,8 @@ name: Container image (DB2)
 
 on:
   push:
-    branches: [script-actions]
+    branches: [master]
+    tags: ['v*']
     # Prose and the compose file are not in the image; rebuilding for them
     # would only re-tag an identical build.
     paths-ignore:
